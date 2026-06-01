@@ -1,0 +1,31 @@
+; Colony Commander — Godot 4.x project
+; A faithful recreation of "Anthill: Tactical Trail Defense" (Image & Form, 2011).
+; This file is the project manifest. Open the folder in Godot 4.x and it loads.
+
+config_version=5
+
+[application]
+
+config/name="Colony Commander"
+config/description="A faithful recreation of Anthill: pheromone-trail RTS / tower defense."
+run/main_scene="res://scenes/Main.tscn"
+config/features=PackedStringArray("4.3", "GL Compatibility")
+config/icon="res://icon.svg"
+
+[display]
+
+window/size/viewport_width=1280
+window/size/viewport_height=720
+window/stretch/mode="canvas_items"
+window/stretch/aspect="expand"
+
+[rendering]
+
+renderer/rendering_method="gl_compatibility"
+renderer/rendering_method.mobile="gl_compatibility"
+; gl_compatibility keeps us portable to web (HTML5) and mobile, per the handoff's
+; "exports to desktop, web, and mobile" goal. For pure-2D it costs us nothing.
+
+[input_devices]
+
+pointing/emulate_touch_from_mouse=true
