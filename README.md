@@ -4,10 +4,14 @@ A faithful recreation of *Anthill: Tactical Trail Defense* (Image & Form, 2011) 
 a pheromone-trail RTS / tower-defense hybrid. Built in **Godot 4.x** (GDScript),
 per the project handoff.
 
-> **This branch contains Step 1 only: the trail-flow prototype.** It is the
-> make-or-break system (handoff §4, §9). There is deliberately **no** combat,
-> carcass harvesting, enemies, or campaign yet. The single goal of this build is
-> to prove the ant streaming *feels alive* before anything downstream is built.
+> **Step 1 — trail-flow prototype** (handoff §4, §9): the make-or-break ant
+> streaming. Proven first, on its own.
+>
+> **Step 2 — combat + carcass + harvest loop** (handoff §5, *now in*): enemies
+> assault the hill; Soldiers/Spitters fight along your trails; slain bugs drop
+> carcasses that Workers haul home for food, which grows the colony. Built
+> *on top of* the Step-1 streaming — the fighting and harvesting happen wherever
+> a trail's tip meets the action. Campaign waves/biomes (§7+) are still ahead.
 
 ---
 
@@ -54,7 +58,7 @@ wire anything in the editor.
 
 | Input | Action |
 |-------|--------|
-| **1 / 2 / 3** | Select caste: **Worker** (blue) / **Soldier** (yellow) / **Spitter** (red) |
+| **1 / 2 / 3** | Select caste: **Worker** (blue, harvests) / **Soldier** (yellow, melee) / **Spitter** (red, ranged) |
 | **Left-drag** | Draw a trail. It always anchors at the anthill, then routes to where you drag. |
 | **E** | Toggle **erase mode** |
 | **Right-click** | Erase the nearest trail (works in any mode) |
@@ -63,6 +67,13 @@ wire anything in the editor.
 Draw a few trails radiating out from the hill, switch castes, and watch the
 colour-coded streams flow out, "work" at the tip, and stream back home. Erase a
 busy trail mid-flow and watch the ants reroute home instead of freezing.
+
+**Step 2 in play:** bugs crawl in from the edges toward your hill (its HP ring
+shrinks if they bite it). Draw a **Soldier** or **Spitter** trail *into* the
+swarm to hold a line — slain bugs leave **carcasses**. Then draw a **Worker**
+trail onto those kills: workers grab the carcasses, haul them home, and bank
+**food**, which raises your population cap. If the hill is overrun the field
+wipes and resets (a "breach") so you can keep iterating on the feel.
 
 ---
 
@@ -101,6 +112,12 @@ sim/ant.gd             # lightweight follower: progress, state, sway, spacing
 sim/trail.gd           # Curve2D wrapper: draw, sample, spawn metering, erase
 sim/colony.gd          # ant POOL, population cap, spawn budget, food stub
 sim/trail_drawer.gd    # input -> Curve2D, caste colour coding, erase/redraw
+sim/enemy.gd           # attacking bug: advances on the hill, fights ants (pooled)
+sim/carcass.gd         # harvestable food dropped by a slain enemy (pooled)
+sim/projectile.gd      # Spitter acid glob (pooled)
+sim/wave_director.gd   # spawns enemy waves; owns enemy/carcass/projectile pools
+fx/fx_layer.gd         # juice: puffs, floating "+food" popups, screen shake
+fx/fx_bit.gd           # one throwaway puff/label flourish
 ui/touch_controls.gd   # on-screen caste / erase / clear buttons for mobile + web
 .github/workflows/     # deploy-web.yml: export HTML5 + publish to GitHub Pages
 data/                  # (empty — level/enemy/balance data lands in later steps)

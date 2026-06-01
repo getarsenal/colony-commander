@@ -26,12 +26,34 @@ const WIGGLE_FREQ := 0.09     # how tight the sway is along the trail
 const WORK_TIME := 0.55       # seconds paused at the destination
 const ARRIVE_EPS := 5.0       # px tolerance for "home"
 
+# --- Step 2: combat + harvest (handoff §5) ------------------------------------
+const HP_BY := {              # caste durability — soldiers tank, spitters are frail
+	AntTypes.Type.WORKER:  8.0,
+	AntTypes.Type.SOLDIER: 30.0,
+	AntTypes.Type.SPITTER: 14.0,
+	AntTypes.Type.BOMBER:  12.0,
+}
+const MELEE_RANGE := 16.0     # soldier bite reach
+const MELEE_DAMAGE := 8.0
+const MELEE_INTERVAL := 0.45
+const SPIT_RANGE := 150.0     # spitter engagement range
+const SPIT_INTERVAL := 0.7
+const HARVEST_RANGE := 28.0   # how near a trail tip a carcass must be to grab it
+
 var state: int = State.IDLE
 var ant_type: int = AntTypes.Type.WORKER
 var dist: float = 0.0         # distance along the trail's baked curve, in px
 var speed: float = 100.0
 var phase: float = 0.0        # per-ant sway phase so the column desyncs
 var work_timer: float = 0.0
+
+# combat / harvest state
+var hp: float = 8.0
+var attack_timer: float = 0.0
+var carrying := false         # a worker hauling a carcass home
+var carry_value := 0
+var _engaged := false         # holding position in melee this frame (pauses advance)
+var _hit_flash := 0.0         # white flash on taking a hit (juice)
 
 var trail = null              # current Trail (null when FREE_RETURN / IDLE)
 var ahead = null              # the Ant directly ahead on this trail (for spacing)
@@ -57,6 +79,12 @@ func launch(p_trail, p_ahead) -> void:
 	state = State.OUTBOUND
 	dist = 0.0
 	work_timer = 0.0
+	hp = HP_BY.get(ant_type, 10.0)
+	attack_timer = 0.0
+	carrying = false
+	carry_value = 0
+	_engaged = false
+	_hit_flash = 0.0
 	speed = AntTypes.speed_of(ant_type) * randf_range(0.88, 1.12)
 	phase = randf() * TAU
 	scale = Vector2.ONE * AntTypes.body_scale_of(ant_type)
@@ -67,11 +95,19 @@ func launch(p_trail, p_ahead) -> void:
 func _process(delta: float) -> void:
 	if state == State.IDLE:
 		return
+	if _hit_flash > 0.0:
+		_hit_flash = max(0.0, _hit_flash - delta)
+	# Soldiers/Spitters fight nearby enemies every frame regardless of trail state.
+	_update_combat(delta)
 	match state:
 		State.OUTBOUND:
 			_advance_outbound(delta)
 		State.WORKING:
 			work_timer -= delta
+			if ant_type == AntTypes.Type.WORKER and not carrying:
+				_try_harvest()
+				if carrying:
+					return  # claimed a carcass and started home this frame
 			# little bob in place while "working"
 			scale.y = AntTypes.body_scale_of(ant_type) * (1.0 + sin(Time.get_ticks_msec() * 0.012 + phase) * 0.08)
 			if work_timer <= 0.0:
@@ -91,6 +127,8 @@ func _advance_outbound(delta: float) -> void:
 	# columns bunch at bottlenecks and pile up at the destination.
 	if _ahead_blocks():
 		target = min(target, ahead.dist - MIN_GAP)
+	if _engaged:
+		target = dist  # holding the line in melee — don't push forward this frame
 	dist = max(dist, target)  # max() so we wait rather than reverse when blocked
 	var length: float = trail.length()
 	if dist >= length:
@@ -111,6 +149,9 @@ func _advance_return(delta: float) -> void:
 	if not is_instance_valid(trail) or not trail.is_usable():
 		_detach_and_free_return()
 		return
+	if _engaged:
+		_place_on_trail()  # stand and fight on the way home
+		return
 	dist -= speed * delta
 	if dist <= 0.0:
 		_arrive_home()
@@ -123,6 +164,72 @@ func _advance_free_return(delta: float) -> void:
 	rotation = (home - position).angle()
 	if position.distance_to(home) <= ARRIVE_EPS:
 		_arrive_home()
+
+# --- combat + harvest (step 2) ------------------------------------------------
+
+## Soldiers bite, Spitters fire. Runs every frame; sets `_engaged` so melee
+## fighters hold position (see _advance_*). Workers don't fight.
+func _update_combat(delta: float) -> void:
+	_engaged = false
+	if attack_timer > 0.0:
+		attack_timer = max(0.0, attack_timer - delta)
+	if colony == null:
+		return
+	match ant_type:
+		AntTypes.Type.SOLDIER:
+			var e = colony.nearest_enemy(position, MELEE_RANGE)
+			if e != null:
+				_engaged = true
+				rotation = (e.position - position).angle()
+				if attack_timer <= 0.0:
+					attack_timer = MELEE_INTERVAL
+					e.take_damage(MELEE_DAMAGE)
+					if colony.fx != null:
+						colony.fx.puff(e.position, Color(0.95, 0.9, 0.6), 7.0)
+		AntTypes.Type.SPITTER:
+			var e = colony.nearest_enemy(position, SPIT_RANGE)
+			if e != null:
+				if position.distance_to(e.position) <= MELEE_RANGE:
+					_engaged = true  # brace only if it's right on top of us
+				if attack_timer <= 0.0:
+					attack_timer = SPIT_INTERVAL
+					rotation = (e.position - position).angle()
+					colony.fire_projectile(position, e)
+
+## A working Worker grabs the nearest carcass in reach and heads home with it.
+func _try_harvest() -> void:
+	if colony == null:
+		return
+	var c = colony.nearest_available_carcass(position, HARVEST_RANGE)
+	if c == null:
+		return
+	var v: int = c.claim_and_take()
+	if v > 0:
+		carry_value = v
+		carrying = true
+		if colony.fx != null:
+			colony.fx.puff(position, Color(0.95, 0.85, 0.35), 8.0)
+		_begin_return()
+
+func take_damage(amount: float) -> void:
+	if state == State.IDLE:
+		return
+	hp -= amount
+	_hit_flash = 0.12
+	if hp <= 0.0:
+		_die_in_combat()
+
+func _die_in_combat() -> void:
+	if state == State.IDLE:
+		return
+	if colony != null:
+		if colony.fx != null:
+			colony.fx.puff(position, AntTypes.color_of(ant_type), 10.0)
+		colony.release_ant(self)  # unregisters from trail + recycles + frees the pool slot
+
+## Enemies only target ants that are actually out on the field.
+func is_combatant_for_enemy() -> bool:
+	return state != State.IDLE and visible
 
 # --- helpers ------------------------------------------------------------------
 
@@ -154,6 +261,12 @@ func _detach_and_free_return() -> void:
 	state = State.FREE_RETURN
 
 func _arrive_home() -> void:
+	if carrying and colony != null:
+		colony.add_food(carry_value)
+		if colony.fx != null:
+			colony.fx.popup(colony.hill_pos + Vector2(0, -30), "+%d" % carry_value, Color(0.95, 0.85, 0.35))
+		carrying = false
+		carry_value = 0
 	if colony != null:
 		colony.release_ant(self)
 
@@ -171,16 +284,23 @@ func recycle() -> void:
 
 func _draw() -> void:
 	var type_color := AntTypes.color_of(ant_type)
+	var body := _base_color
+	if _hit_flash > 0.0:
+		body = body.lerp(Color.WHITE, _hit_flash / 0.12)  # white pop on a hit
 	# body: abdomen / thorax / head along +X (head forward)
-	draw_circle(Vector2(-4.0, 0.0), 3.2, _base_color)   # abdomen
-	draw_circle(Vector2(0.0, 0.0), 2.4, _base_color)    # thorax
-	draw_circle(Vector2(3.6, 0.0), 2.0, _base_color)    # head
+	draw_circle(Vector2(-4.0, 0.0), 3.2, body)   # abdomen
+	draw_circle(Vector2(0.0, 0.0), 2.4, body)    # thorax
+	draw_circle(Vector2(3.6, 0.0), 2.0, body)    # head
 	# caste marker on the abdomen
 	draw_circle(Vector2(-4.0, 0.0), 1.6, type_color)
 	# antennae
-	draw_line(Vector2(4.6, -0.5), Vector2(7.2, -2.6), _base_color, 0.8)
-	draw_line(Vector2(4.6, 0.5), Vector2(7.2, 2.6), _base_color, 0.8)
+	draw_line(Vector2(4.6, -0.5), Vector2(7.2, -2.6), body, 0.8)
+	draw_line(Vector2(4.6, 0.5), Vector2(7.2, 2.6), body, 0.8)
 	# three pairs of legs
 	for lx in [-2.0, 0.0, 2.0]:
-		draw_line(Vector2(lx, 0.0), Vector2(lx - 1.0, -4.0), _base_color, 0.8)
-		draw_line(Vector2(lx, 0.0), Vector2(lx - 1.0, 4.0), _base_color, 0.8)
+		draw_line(Vector2(lx, 0.0), Vector2(lx - 1.0, -4.0), body, 0.8)
+		draw_line(Vector2(lx, 0.0), Vector2(lx - 1.0, 4.0), body, 0.8)
+	# a hauled carcass rides on the worker's back
+	if carrying:
+		draw_circle(Vector2(-5.0, 0.0), 3.0, Color(0.85, 0.75, 0.35))
+		draw_circle(Vector2(-5.0, 0.0), 1.4, Color(0.6, 0.55, 0.3))
