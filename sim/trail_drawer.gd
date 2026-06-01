@@ -42,15 +42,31 @@ func _unhandled_input(event: InputEvent) -> void:
 func _handle_key(keycode: int) -> void:
 	match keycode:
 		KEY_1:
-			current_type = AntTypes.Type.WORKER
+			set_caste(AntTypes.Type.WORKER)
 		KEY_2:
-			current_type = AntTypes.Type.SOLDIER
+			set_caste(AntTypes.Type.SOLDIER)
 		KEY_3:
-			current_type = AntTypes.Type.SPITTER
+			set_caste(AntTypes.Type.SPITTER)
 		KEY_E:
-			erase_mode = not erase_mode
+			toggle_erase()
 		KEY_C:
-			_clear_all()
+			clear_all()
+
+# --- public command surface (shared by keyboard + on-screen touch controls) ---
+
+func set_caste(type: int) -> void:
+	current_type = type
+	# Picking a caste is a drawing action; leave erase mode so the next drag draws.
+	erase_mode = false
+
+func toggle_erase() -> void:
+	erase_mode = not erase_mode
+
+func set_erase(on: bool) -> void:
+	erase_mode = on
+
+func clear_all() -> void:
+	_clear_all()
 
 func _on_press(world_pos: Vector2) -> void:
 	if erase_mode:

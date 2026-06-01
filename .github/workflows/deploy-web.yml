@@ -1,0 +1,84 @@
+name: Deploy Web build to GitHub Pages
+
+# Builds the Godot 4.3 HTML5 export and publishes it to GitHub Pages so the
+# prototype is playable on a phone (the target platform) straight from a URL.
+# The export preset disables thread support, so the build runs on Pages without
+# the cross-origin-isolation (COOP/COEP) headers Pages can't send.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# Least-privilege token plus the Pages deploy scopes.
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Only one deploy at a time; let an in-progress run finish (don't cancel mid-publish).
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+env:
+  GODOT_VERSION: 4.3-stable
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download Godot ${{ env.GODOT_VERSION }} + export templates
+        run: |
+          set -euo pipefail
+          base="https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}"
+          curl -fsSL -o godot.zip "${base}/Godot_v${GODOT_VERSION}_linux.x86_64.zip"
+          curl -fsSL -o templates.tpz "${base}/Godot_v${GODOT_VERSION}_export_templates.tpz"
+          unzip -q godot.zip
+          chmod +x "Godot_v${GODOT_VERSION}_linux.x86_64"
+          sudo mv "Godot_v${GODOT_VERSION}_linux.x86_64" /usr/local/bin/godot
+          # Templates must live under <version>.<status>, e.g. 4.3.stable
+          tpl_dir="$HOME/.local/share/godot/export_templates/${GODOT_VERSION/-/.}"
+          mkdir -p "$tpl_dir"
+          unzip -q templates.tpz -d tpl
+          mv tpl/templates/* "$tpl_dir/"
+          godot --version
+
+      - name: Import resources
+        run: |
+          # Generate the .godot import cache before exporting (fresh checkout has none).
+          godot --headless --path . --editor --quit 2>&1 || true
+          godot --headless --path . --editor --quit 2>&1 || true
+
+      - name: Export Web build
+        run: |
+          set -euo pipefail
+          mkdir -p build/web
+          godot --headless --path . --export-release "Web" build/web/index.html
+          test -f build/web/index.wasm
+          # GitHub Pages won't serve a directory index named index.html as the
+          # site root unless it's named index.html (it is) — nothing else needed.
+          ls -lh build/web
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: build/web
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Enable Pages (if not already)
+        uses: actions/configure-pages@v5
+        with:
+          enablement: true
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

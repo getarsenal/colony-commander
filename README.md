@@ -11,6 +11,29 @@ per the project handoff.
 
 ---
 
+## Play on your phone (the target platform)
+
+Colony Commander targets **mobile**, so the prototype ships with **on-screen
+touch controls** and an automated **web (HTML5) build** you can open in a phone
+browser — no app install.
+
+- **Live URL:** once GitHub Pages is enabled for this repo, every push to `main`
+  auto-deploys to **https://getarsenal.github.io/colony-commander/** via the
+  `.github/workflows/deploy-web.yml` workflow.
+- **Controls on touch:** a button bar at the bottom selects the caste
+  (Worker / Soldier / Spitter) and toggles **Erase** / **Clear**. **Drag**
+  anywhere to draw a trail (it always anchors at the hill); in Erase mode, tap a
+  trail to remove it. The keyboard shortcuts below still work on desktop.
+- The web build is exported with **thread support off** so it runs on GitHub
+  Pages without cross-origin-isolation (COOP/COEP) headers.
+
+> First deploy only: if Pages isn't enabled yet, the workflow tries to enable it
+> automatically; if org policy blocks that, flip it on once under
+> **Settings → Pages → Build and deployment → GitHub Actions**, then re-run the
+> workflow.
+
+---
+
 ## First time with Godot? Start here
 
 1. **Install Godot 4.x** (the standard build, *not* the .NET/C# build — this
@@ -69,6 +92,7 @@ building combat/harvest. All the feel knobs are constants at the top of
 
 ```
 project.godot          # Godot project manifest
+export_presets.cfg     # Web (HTML5) export preset — threads off for GitHub Pages
 icon.svg               # app/window icon
 scenes/Main.tscn       # trivial root scene -> main.gd builds everything
 scenes/main.gd         # wires the slice, draws ground + anthill + HUD
@@ -77,6 +101,8 @@ sim/ant.gd             # lightweight follower: progress, state, sway, spacing
 sim/trail.gd           # Curve2D wrapper: draw, sample, spawn metering, erase
 sim/colony.gd          # ant POOL, population cap, spawn budget, food stub
 sim/trail_drawer.gd    # input -> Curve2D, caste colour coding, erase/redraw
+ui/touch_controls.gd   # on-screen caste / erase / clear buttons for mobile + web
+.github/workflows/     # deploy-web.yml: export HTML5 + publish to GitHub Pages
 data/                  # (empty — level/enemy/balance data lands in later steps)
 assets/                # (empty — placeholder art/audio lands in step 2+)
 ```

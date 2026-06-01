@@ -14,6 +14,7 @@ var hill_pos := Vector2(640, 380)
 var colony: Colony
 var trail_container: Node2D
 var trail_drawer: TrailDrawer
+var touch_controls: TouchControls
 
 var _info_label: Label
 var _stats_label: Label
@@ -47,6 +48,12 @@ func _ready() -> void:
 	trail_drawer.hill_pos = hill_pos
 	add_child(trail_drawer)
 
+	# --- on-screen controls for touch (mobile/web is the target platform) ---
+	touch_controls = TouchControls.new()
+	touch_controls.name = "TouchControls"
+	touch_controls.drawer = trail_drawer
+	add_child(touch_controls)
+
 	_build_hud()
 	queue_redraw()
 
@@ -68,9 +75,9 @@ func _process(_delta: float) -> void:
 	if _info_label == null:
 		return
 	_info_label.text = "COLONY COMMANDER — trail-flow prototype (step 1)\n" \
-		+ "[1] Worker (blue)   [2] Soldier (yellow)   [3] Spitter (red)\n" \
-		+ "Left-drag from anywhere: draw a trail (anchored at the hill)\n" \
-		+ "[E] erase mode   right-click: erase a trail   [C] clear all"
+		+ "Pick a caste below, then DRAG from anywhere to draw a trail\n" \
+		+ "(it always anchors at the hill). Tap Erase, then a trail, to remove it.\n" \
+		+ "Desktop shortcuts: [1/2/3] caste  [E] erase  [C] clear  right-click erase"
 
 	var mode := "ERASE" if trail_drawer.erase_mode else "DRAW"
 	_stats_label.text = "Selected: %s    Mode: %s\nAnts: %d / %d    Trails: %d    FPS: %d" % [
