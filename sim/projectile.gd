@@ -63,6 +63,11 @@ func _despawn() -> void:
 	if director != null:
 		director.release_projectile(self)
 
+## Remove in flight (used on a level reset).
+func force_despawn() -> void:
+	if _alive:
+		_despawn()
+
 func _draw() -> void:
 	draw_circle(Vector2.ZERO, 3.4, Color(0.55, 0.85, 0.25, 0.9))
 	draw_circle(Vector2(-3.0, 0.0), 2.0, Color(0.45, 0.75, 0.20, 0.5))  # tail

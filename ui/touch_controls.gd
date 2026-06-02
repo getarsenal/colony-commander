@@ -25,8 +25,22 @@ var _caste_style := {}               # type -> { "on": StyleBoxFlat, "off": Styl
 var _erase_on: StyleBoxFlat
 var _erase_off: StyleBoxFlat
 
+var _bg: Panel
+
 func _ready() -> void:
 	layer = 5  # above the world's CanvasLayer HUD text underlay
+	process_mode = Node.PROCESS_MODE_ALWAYS  # stay usable (and tappable) while paused
+
+	# backing bar so the caste buttons read as one control panel
+	_bg = Panel.new()
+	var bgsb := StyleBoxFlat.new()
+	bgsb.bg_color = Color(0.10, 0.09, 0.08, 0.66)
+	bgsb.set_corner_radius_all(14)
+	bgsb.set_border_width_all(2)
+	bgsb.border_color = Color(0.0, 0.0, 0.0, 0.4)
+	_bg.add_theme_stylebox_override("panel", bgsb)
+	add_child(_bg)
+
 	_bar = HBoxContainer.new()
 	_bar.add_theme_constant_override("separation", GAP)
 	add_child(_bar)
@@ -80,6 +94,9 @@ func _reposition() -> void:
 	var vp := get_viewport().get_visible_rect().size
 	_bar.size = _bar.get_combined_minimum_size()
 	_bar.position = Vector2((vp.x - _bar.size.x) * 0.5, vp.y - _bar.size.y - MARGIN)
+	var pad := 8.0
+	_bg.position = _bar.position - Vector2(pad, pad)
+	_bg.size = _bar.size + Vector2(pad * 2.0, pad * 2.0)
 
 func _update_highlights() -> void:
 	for t in _caste_buttons:

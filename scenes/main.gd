@@ -1,12 +1,8 @@
-## Step 1 vertical slice: the trail-flow prototype (handoff §4 + §9 step 1).
-##
-## Builds the whole scene from code so the .tscn stays trivial (one root node) —
-## easier to keep correct without opening the editor, and easier for a Godot
-## newcomer to read. Wires the Colony, Trail container, TrailDrawer and a HUD,
-## draws the ground + anthill, and pre-builds the ant pool.
-##
-## This prototype intentionally has NO combat, carcasses or enemies yet. Its one
-## job is to prove the streaming FEELS alive before anything downstream is built.
+## Scene assembler (handoff §4/§5/§7). Builds the whole game from code so the
+## .tscn stays trivial: wires the Colony + ant pool, the trail drawer, the threat
+## WaveDirector (enemies/carcasses/projectiles), the juice layer, the touch caste
+## panel and the HUD (top bar + wave controls + win/lose overlay); draws the
+## ground + anthill + hill-HP ring; and routes the HUD's speed/pause/restart.
 extends Node2D
 
 var hill_pos := Vector2(640, 380)
@@ -17,9 +13,9 @@ var trail_drawer: TrailDrawer
 var touch_controls: TouchControls
 var director: WaveDirector
 var fx: FxLayer
+var hud: HUD
 
-var _info_label: Label
-var _stats_label: Label
+var _hint: Label
 
 func _ready() -> void:
 	hill_pos = get_viewport_rect().size * Vector2(0.5, 0.55)
@@ -86,58 +82,51 @@ func _ready() -> void:
 	touch_controls.drawer = trail_drawer
 	add_child(touch_controls)
 
-	_build_hud()
+	# --- HUD: top status bar, wave controls, win/lose overlay ---
+	hud = HUD.new()
+	hud.name = "HUD"
+	hud.colony = colony
+	hud.director = director
+	hud.main = self
+	add_child(hud)
+
+	_build_hint()
 	queue_redraw()
 
-func _build_hud() -> void:
+func _build_hint() -> void:
 	var layer := CanvasLayer.new()
+	layer.layer = 4
 	add_child(layer)
-
-	_info_label = Label.new()
-	_info_label.position = Vector2(16, 12)
-	_info_label.add_theme_color_override("font_color", Color(0.92, 0.92, 0.88))
-	layer.add_child(_info_label)
-
-	_stats_label = Label.new()
-	_stats_label.position = Vector2(16, 150)
-	_stats_label.add_theme_color_override("font_color", Color(0.65, 0.85, 0.65))
-	layer.add_child(_stats_label)
+	_hint = Label.new()
+	_hint.position = Vector2(14, 62)
+	_hint.add_theme_font_size_override("font_size", 13)
+	_hint.add_theme_color_override("font_color", Color(0.85, 0.85, 0.78, 0.85))
+	_hint.text = "Pick a caste below, then DRAG from the hill: lead Soldiers/Spitters into\nthe bugs, then send Workers onto the kills to harvest food."
+	layer.add_child(_hint)
 
 func _process(_delta: float) -> void:
-	if _info_label == null:
-		return
-	_info_label.text = "COLONY COMMANDER — defend the hill (step 2)\n" \
-		+ "[1] Worker — harvest carcasses   [2] Soldier — melee   [3] Spitter — ranged\n" \
-		+ "DRAG to draw a trail into the bugs to fight, then onto the kills to harvest.\n" \
-		+ "Tap Erase then a trail to remove it.   Desktop: [1/2/3] [E] erase [C] clear"
-
-	var mode := "ERASE" if trail_drawer.erase_mode else "DRAW"
-	_stats_label.text = "Selected: %s    Mode: %s\nAnts: %d / %d    Trails: %d    FPS: %d\nHill: %d/%d    Food: %d    Wave: %d    Slain: %d    Breaches: %d" % [
-		AntTypes.name_of(trail_drawer.current_type),
-		mode,
-		colony.active_count,
-		colony.population_cap,
-		_trail_count(),
-		Engine.get_frames_per_second(),
-		int(colony.hill_hp),
-		int(Colony.HILL_HP_MAX),
-		colony.food,
-		director.wave,
-		director.enemies_killed,
-		colony.breaches,
-	]
-
-	# screen shake (juice) + keep the dynamic hill-HP ring fresh
+	# world screen-shake (juice) + keep the dynamic hill-HP ring fresh
 	if fx != null:
 		position = fx.shake_offset
 	queue_redraw()
 
-func _trail_count() -> int:
-	var n := 0
-	for c in trail_container.get_children():
-		if c is Trail:
-			n += 1
-	return n
+# --- HUD control hooks --------------------------------------------------------
+
+func set_game_speed(fast: bool) -> void:
+	Engine.time_scale = 2.0 if fast else 1.0
+
+func toggle_pause() -> bool:
+	var p := not get_tree().paused
+	get_tree().paused = p
+	return p
+
+func restart_level() -> void:
+	trail_drawer.clear_all()
+	colony.recall_all()
+	director.reset_level()
+	colony.reset_defense()
+	Engine.time_scale = 1.0
+	get_tree().paused = false
 
 func _draw() -> void:
 	var size := get_viewport_rect().size

@@ -29,8 +29,7 @@ const FOOD_PER_CAP := 4           # every N food banked raises the population ca
 
 var director = null               # WaveDirector: enemy / carcass / projectile queries
 var fx = null                     # FxLayer: juice (puffs, popups, screen shake)
-var hill_hp: float = HILL_HP_MAX  # the base you defend; 0 -> a breach
-var breaches := 0
+var hill_hp: float = HILL_HP_MAX  # the base you defend; 0 -> DEFEAT
 
 func build_pool() -> void:
 	var ant_script: Script = load("res://sim/ant.gd")
@@ -112,20 +111,26 @@ func add_food(n: int) -> void:
 	population_cap = min(POOL_SIZE, DEFAULT_POP_CAP + int(food / FOOD_PER_CAP))
 
 func damage_hill(n: float) -> void:
-	hill_hp -= n
+	if hill_hp <= 0.0:
+		return  # already overrun; the director is in DEFEAT
+	hill_hp = max(0.0, hill_hp - n)
 	if fx != null:
 		fx.add_shake(0.35)
 		fx.puff(hill_pos, Color(0.9, 0.3, 0.2), 16.0)
 	if hill_hp <= 0.0:
-		_breach()
+		if fx != null:
+			fx.add_shake(1.0)
+		if director != null:
+			director.on_hill_destroyed()  # -> DEFEAT (HUD shows the overlay)
 
-## Base overrun: a big juicy beat, then we wipe the field and reset HP so a
-## playtest keeps rolling (full game-over flow lands with the campaign step).
-func _breach() -> void:
-	breaches += 1
+## Restore the base + larder for a fresh attempt (paired with director.reset_level).
+func reset_defense() -> void:
 	hill_hp = HILL_HP_MAX
-	if director != null:
-		director.clear_all_enemies()
-	if fx != null:
-		fx.add_shake(1.0)
-		fx.popup(hill_pos + Vector2(0, -52), "BREACH!", Color(1.0, 0.4, 0.3))
+	food = 0
+	population_cap = DEFAULT_POP_CAP
+
+## Send every ant on the field home/IDLE (used on a level restart).
+func recall_all() -> void:
+	for a in _pool:
+		if a.is_active():
+			release_ant(a)

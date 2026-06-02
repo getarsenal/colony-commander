@@ -1,19 +1,25 @@
-## The threat brain: spawns enemy waves and owns the enemy / carcass / projectile
-## pools (handoff §7 wave director, scoped to a continuous-trickle first slice).
+## The threat brain + level flow (handoff §7 wave director, first campaign slice).
 ##
-## Mirrors the Colony's pooling discipline. Difficulty escalates slowly over time
-## so playtesting the combat/harvest FEEL stays pleasant rather than punishing —
-## the real wave-table / campaign pacing lands with the campaign step.
+## A level is a fixed sequence of waves. Between waves there's a PREP countdown
+## the player can short-circuit with "Call Wave" (Anthill's summon-early beat —
+## braver play, faster level). Surviving the last wave = VICTORY; the hill
+## falling = DEFEAT. Owns the enemy / carcass / projectile pools with the same
+## 60fps pooling discipline as the Colony.
 class_name WaveDirector
 extends Node2D
+
+enum State { PREP, SPAWNING, CLEARING, VICTORY, DEFEAT }
 
 const ENEMY_POOL := 64
 const CARCASS_POOL := 96
 const PROJECTILE_POOL := 96
-const MAX_ALIVE := 26                 # concurrent enemy cap (perf + readability)
-const BASE_INTERVAL := 2.6            # seconds between spawns at wave 1
-const MIN_INTERVAL := 0.6
-const RAMP_PER_SEC := 0.012           # how fast spawn cadence tightens
+const MAX_ALIVE := 26                  # concurrent enemy cap (perf + readability)
+
+# A gentle escalating level — counts only for this slice; types/biomes come later.
+const WAVE_COUNTS := [6, 9, 13, 17, 22, 28]
+const FIRST_PREP := 9.0                # breathing room before wave 1
+const PREP_TIME := 14.0                # seconds of prep between waves
+const SPAWN_SPACING := 0.55            # seconds between bugs within a wave
 
 var colony = null
 var enemy_layer: Node2D
@@ -21,9 +27,13 @@ var carcass_layer: Node2D
 var projectile_layer: Node2D
 var fx = null
 
-var elapsed := 0.0
-var wave := 1
+var state: int = State.PREP
+var wave_index := 0                    # 0-based index of the NEXT/current wave
+var prep_timer := FIRST_PREP
 var enemies_killed := 0
+
+var _to_spawn := 0
+var _spawn_timer := 0.0
 
 var _enemy_pool: Array = []
 var _enemy_free: Array = []
@@ -31,8 +41,6 @@ var _carcass_pool: Array = []
 var _carcass_free: Array = []
 var _proj_pool: Array = []
 var _proj_free: Array = []
-
-var _spawn_accum := 0.0
 
 func build_pools() -> void:
 	var enemy_script: Script = load("res://sim/enemy.gd")
@@ -60,20 +68,74 @@ func build_pools() -> void:
 func alive_enemy_count() -> int:
 	return ENEMY_POOL - _enemy_free.size()
 
-func _process(delta: float) -> void:
-	elapsed += delta
-	wave = 1 + int(elapsed / 30.0)   # a new "wave" tier every 30s
-	var interval: float = max(MIN_INTERVAL, BASE_INTERVAL - elapsed * RAMP_PER_SEC)
-	_spawn_accum += delta
-	while _spawn_accum >= interval:
-		_spawn_accum -= interval
-		_try_spawn()
+# --- level flow ---------------------------------------------------------------
 
-func _try_spawn() -> void:
-	if _enemy_free.is_empty() or alive_enemy_count() >= MAX_ALIVE:
-		return
+func _process(delta: float) -> void:
+	match state:
+		State.PREP:
+			prep_timer -= delta
+			if prep_timer <= 0.0:
+				_start_wave()
+		State.SPAWNING:
+			_spawn_timer -= delta
+			if _to_spawn > 0 and _spawn_timer <= 0.0 \
+					and alive_enemy_count() < MAX_ALIVE and not _enemy_free.is_empty():
+				_spawn_one()
+				_to_spawn -= 1
+				_spawn_timer = SPAWN_SPACING
+			if _to_spawn <= 0:
+				state = State.CLEARING
+		State.CLEARING:
+			if alive_enemy_count() == 0:
+				wave_index += 1
+				if wave_index >= WAVE_COUNTS.size():
+					state = State.VICTORY
+				else:
+					state = State.PREP
+					prep_timer = PREP_TIME
+		State.VICTORY, State.DEFEAT:
+			pass
+
+func _start_wave() -> void:
+	_to_spawn = WAVE_COUNTS[wave_index]
+	_spawn_timer = 0.0
+	state = State.SPAWNING
+
+func _spawn_one() -> void:
 	var e = _enemy_pool[_enemy_free.pop_back()]
 	e.spawn(_edge_spawn_point())
+
+## Player summons the pending wave immediately (only meaningful during PREP).
+func call_wave() -> void:
+	if state == State.PREP:
+		prep_timer = 0.0
+
+func on_hill_destroyed() -> void:
+	state = State.DEFEAT
+
+# --- HUD queries --------------------------------------------------------------
+
+func total_waves() -> int:
+	return WAVE_COUNTS.size()
+
+func is_prep() -> bool:
+	return state == State.PREP
+
+func is_victory() -> bool:
+	return state == State.VICTORY
+
+func is_defeat() -> bool:
+	return state == State.DEFEAT
+
+## Bugs still owed this level-phase: the unspawned remainder plus those alive.
+func enemies_remaining() -> int:
+	return _to_spawn + alive_enemy_count()
+
+## Size of the wave that PREP is counting down to (for the "incoming" preview).
+func incoming_preview() -> int:
+	return WAVE_COUNTS[wave_index] if wave_index < WAVE_COUNTS.size() else 0
+
+# --- spawning helpers ---------------------------------------------------------
 
 ## Pick a point just outside a random screen edge so bugs crawl inward.
 func _edge_spawn_point() -> Vector2:
@@ -116,12 +178,6 @@ func release(enemy) -> void:
 	if idx != -1:
 		_enemy_free.append(idx)
 
-## Wipe every living enemy (used on a base breach). No carcasses dropped.
-func clear_all_enemies() -> void:
-	for e in _enemy_pool:
-		if e.is_alive():
-			e.force_despawn()
-
 func release_carcass(carcass) -> void:
 	var idx := _carcass_pool.find(carcass)
 	if idx != -1:
@@ -132,7 +188,35 @@ func release_projectile(proj) -> void:
 	if idx != -1:
 		_proj_free.append(idx)
 
-# --- spatial queries used by ants (harvest) -----------------------------------
+# --- field wipe + level reset -------------------------------------------------
+
+func clear_all_enemies() -> void:
+	for e in _enemy_pool:
+		if e.is_alive():
+			e.force_despawn()
+
+func clear_all_carcasses() -> void:
+	for c in _carcass_pool:
+		if c.is_available():
+			c.force_despawn()
+
+func clear_all_projectiles() -> void:
+	for p in _proj_pool:
+		p.force_despawn()
+
+## Full restart back to wave 1 prep with an empty field.
+func reset_level() -> void:
+	clear_all_enemies()
+	clear_all_carcasses()
+	clear_all_projectiles()
+	state = State.PREP
+	wave_index = 0
+	prep_timer = FIRST_PREP
+	enemies_killed = 0
+	_to_spawn = 0
+	_spawn_timer = 0.0
+
+# --- spatial queries used by ants ---------------------------------------------
 
 func nearest_enemy(pos: Vector2, max_dist: float):
 	var best = null

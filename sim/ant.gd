@@ -231,6 +231,9 @@ func _die_in_combat() -> void:
 func is_combatant_for_enemy() -> bool:
 	return state != State.IDLE and visible
 
+func is_active() -> bool:
+	return state != State.IDLE
+
 # --- helpers ------------------------------------------------------------------
 
 func _ahead_blocks() -> bool:

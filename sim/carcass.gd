@@ -53,6 +53,11 @@ func _despawn() -> void:
 	if director != null:
 		director.release_carcass(self)
 
+## Remove without feeding anyone (used on a level reset).
+func force_despawn() -> void:
+	if _alive:
+		_despawn()
+
 func _process(delta: float) -> void:
 	if not _alive:
 		return

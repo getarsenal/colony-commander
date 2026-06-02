@@ -7,11 +7,16 @@ per the project handoff.
 > **Step 1 — trail-flow prototype** (handoff §4, §9): the make-or-break ant
 > streaming. Proven first, on its own.
 >
-> **Step 2 — combat + carcass + harvest loop** (handoff §5, *now in*): enemies
-> assault the hill; Soldiers/Spitters fight along your trails; slain bugs drop
-> carcasses that Workers haul home for food, which grows the colony. Built
-> *on top of* the Step-1 streaming — the fighting and harvesting happen wherever
-> a trail's tip meets the action. Campaign waves/biomes (§7+) are still ahead.
+> **Step 2 — combat + carcass + harvest loop** (handoff §5): enemies assault the
+> hill; Soldiers/Spitters fight along your trails; slain bugs drop carcasses that
+> Workers haul home for food, which grows the colony. Built *on top of* the
+> Step-1 streaming — fighting/harvesting happen wherever a trail's tip meets the action.
+>
+> **Step 3 — level flow + UI** (handoff §7, *now in*): a 6-wave level with a prep
+> countdown and a **Call Wave** button (summon early), **Victory** on surviving
+> all waves and **Defeat** if the hill falls (with Restart). Plus an Anthill-style
+> HUD: hill-health bar, food counter, `Wave X / 6` with next-wave preview, and
+> **speed (1×/2×) / pause** controls. Upgrade trees & biomes (§8+) are still ahead.
 
 ---
 
@@ -72,8 +77,14 @@ busy trail mid-flow and watch the ants reroute home instead of freezing.
 shrinks if they bite it). Draw a **Soldier** or **Spitter** trail *into* the
 swarm to hold a line — slain bugs leave **carcasses**. Then draw a **Worker**
 trail onto those kills: workers grab the carcasses, haul them home, and bank
-**food**, which raises your population cap. If the hill is overrun the field
-wipes and resets (a "breach") so you can keep iterating on the feel.
+**food**, which raises your population cap.
+
+**Level flow & HUD (Step 3):** the top bar shows hill health, food, and
+`Wave X / 6` with the next wave's size and countdown. Tap **Call Wave** to
+summon the next wave early, **1× / 2×** to fast-forward, and **Pause** to stop
+the clock (the caste panel still works while paused). Survive all six waves to
+**win**; if the hill's health hits zero it's **Defeat** — hit **Restart Level**
+to try again.
 
 ---
 
@@ -118,7 +129,9 @@ sim/projectile.gd      # Spitter acid glob (pooled)
 sim/wave_director.gd   # spawns enemy waves; owns enemy/carcass/projectile pools
 fx/fx_layer.gd         # juice: puffs, floating "+food" popups, screen shake
 fx/fx_bit.gd           # one throwaway puff/label flourish
-ui/touch_controls.gd   # on-screen caste / erase / clear buttons for mobile + web
+ui/touch_controls.gd   # bottom caste / erase / clear panel for mobile + web
+ui/hud.gd              # HUD: Call-Wave / speed / pause buttons + win-lose overlay
+ui/hud_topbar.gd       # top status bar: hill health, food, wave progress
 .github/workflows/     # deploy-web.yml: export HTML5 + publish to GitHub Pages
 data/                  # (empty — level/enemy/balance data lands in later steps)
 assets/                # (empty — placeholder art/audio lands in step 2+)
