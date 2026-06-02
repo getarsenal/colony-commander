@@ -12,12 +12,13 @@ extends RefCounted
 
 enum Type { WORKER, SOLDIER, SPITTER, BOMBER }
 
-## Trail / caste colour coding.
+## Trail / caste colour coding (faithful to the original: worker=blue,
+## soldier=yellow, spitter=pink).
 const COLORS := {
-	Type.WORKER:  Color(0.28, 0.55, 0.95),   # blue
-	Type.SOLDIER: Color(0.95, 0.80, 0.20),   # yellow
-	Type.SPITTER: Color(0.92, 0.36, 0.18),   # red / orange
-	Type.BOMBER:  Color(0.36, 0.74, 0.38),   # green
+	Type.WORKER:  Color(0.30, 0.58, 0.96),   # blue
+	Type.SOLDIER: Color(0.97, 0.81, 0.22),   # yellow
+	Type.SPITTER: Color(0.95, 0.42, 0.78),   # pink
+	Type.BOMBER:  Color(0.40, 0.78, 0.42),   # green
 }
 
 const NAMES := {

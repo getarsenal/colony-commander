@@ -11,7 +11,7 @@
 class_name TrailDrawer
 extends Node2D
 
-const ERASE_HIT_DIST := 16.0
+const ERASE_HIT_DIST := 30.0   # generous so a finger-tap reliably grabs a trail
 
 var colony: Colony
 var trail_container: Node2D
@@ -21,6 +21,7 @@ var current_type: int = AntTypes.Type.WORKER
 var erase_mode := false
 
 var _active_trail: Trail = null   # the trail being dragged right now
+var _erasing := false             # finger held down in erase mode (swipe-to-erase)
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and not event.echo:
@@ -30,14 +31,21 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton:
 		if event.button_index == MOUSE_BUTTON_LEFT:
 			if event.pressed:
+				if erase_mode:
+					_erasing = true
 				_on_press(get_global_mouse_position())
 			else:
+				_erasing = false
 				_on_release()
 		elif event.button_index == MOUSE_BUTTON_RIGHT and event.pressed:
-			# right-click is a convenient erase regardless of mode
+			# right-click is a convenient erase regardless of mode (desktop)
 			_erase_at(get_global_mouse_position())
-	elif event is InputEventMouseMotion and _active_trail != null:
-		_active_trail.try_add_point(get_global_mouse_position())
+	elif event is InputEventMouseMotion:
+		if _active_trail != null:
+			_active_trail.try_add_point(get_global_mouse_position())
+		elif _erasing:
+			# swipe across trails to wipe them out
+			_erase_at(get_global_mouse_position())
 
 func _handle_key(keycode: int) -> void:
 	match keycode:
@@ -96,6 +104,8 @@ func _erase_at(world_pos: Vector2) -> void:
 				best_d = d
 				best = child
 	if best != null:
+		if colony != null and colony.fx != null:
+			colony.fx.puff(world_pos, Color(0.93, 0.48, 0.45), 12.0)
 		best.dissolve()
 		best.queue_free()
 

@@ -26,6 +26,7 @@ var enemy_layer: Node2D
 var carcass_layer: Node2D
 var projectile_layer: Node2D
 var fx = null
+var camera: Camera2D = null   # so bugs enter from the edges of the *visible* world
 
 var state: int = State.PREP
 var wave_index := 0                    # 0-based index of the NEXT/current wave
@@ -137,15 +138,19 @@ func incoming_preview() -> int:
 
 # --- spawning helpers ---------------------------------------------------------
 
-## Pick a point just outside a random screen edge so bugs crawl inward.
+## Pick a point just outside a random edge of the visible world so bugs crawl in.
 func _edge_spawn_point() -> Vector2:
-	var vp := get_viewport_rect().size
-	var m := 24.0
+	var center: Vector2 = colony.hill_pos
+	var vsize := get_viewport_rect().size
+	if camera != null:
+		vsize = vsize / camera.zoom
+	var half := vsize * 0.5
+	var m := 36.0
 	match randi() % 4:
-		0: return Vector2(randf() * vp.x, -m)            # top
-		1: return Vector2(vp.x + m, randf() * vp.y)      # right
-		2: return Vector2(randf() * vp.x, vp.y + m)      # bottom
-		_: return Vector2(-m, randf() * vp.y)            # left
+		0: return center + Vector2(randf_range(-half.x, half.x), -half.y - m)  # top
+		1: return center + Vector2(half.x + m, randf_range(-half.y, half.y))   # right
+		2: return center + Vector2(randf_range(-half.x, half.x), half.y + m)   # bottom
+		_: return center + Vector2(-half.x - m, randf_range(-half.y, half.y))  # left
 
 # --- callbacks from entities --------------------------------------------------
 
