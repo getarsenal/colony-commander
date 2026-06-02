@@ -117,7 +117,8 @@ project.godot          # Godot project manifest
 export_presets.cfg     # Web (HTML5) export preset — threads off for GitHub Pages
 icon.svg               # app/window icon
 scenes/Main.tscn       # trivial root scene -> main.gd builds everything
-scenes/main.gd         # wires the slice, draws ground + anthill + HUD
+scenes/main.gd         # wires the slice, camera, hill-HP bar; routes HUD actions
+scenes/terrain.gd      # static lush jungle floor + anthill mound (drawn once)
 sim/ant_types.gd       # the 4 castes: colours, speeds, names (class AntTypes)
 sim/ant.gd             # lightweight follower: progress, state, sway, spacing
 sim/trail.gd           # Curve2D wrapper: draw, sample, spawn metering, erase

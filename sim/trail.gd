@@ -89,15 +89,25 @@ func dissolve() -> void:
 	ants.clear()
 	outbound.clear()
 
+const DOT_SPACING := 13.0   # gap between pheromone dots
+
 func _draw() -> void:
 	if curve.point_count < 2:
 		# while starting a drag, show the origin dot
 		if curve.point_count == 1:
-			draw_circle(curve.get_point_position(0), 5.0, Color(color, 0.7))
+			_dot(curve.get_point_position(0))
 		return
-	var pts := curve.get_baked_points()
-	# soft wide underlay + brighter core = a "pheromone" glow read
-	draw_polyline(pts, Color(color, 0.18), 11.0, true)
-	draw_polyline(pts, Color(color, 0.5), 5.0, true)
-	# endpoint marker
-	draw_circle(pts[pts.size() - 1], 4.0, Color(color, 0.8))
+	# dotted pheromone trail (worker blue / soldier yellow / spitter pink)
+	var total := curve.get_baked_length()
+	var d := 0.0
+	while d <= total:
+		_dot(curve.sample_baked(d))
+		d += DOT_SPACING
+	# a brighter node at the destination
+	var endp := curve.sample_baked(total)
+	draw_circle(endp, 6.0, Color(color, 0.22))
+	draw_circle(endp, 3.4, Color(color, 1.0))
+
+func _dot(p: Vector2) -> void:
+	draw_circle(p, 5.0, Color(color, 0.16))   # soft glow
+	draw_circle(p, 2.7, Color(color, 0.95))   # bright core

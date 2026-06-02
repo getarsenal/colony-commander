@@ -13,7 +13,6 @@ const MARGIN := 22
 
 var drawer: TrailDrawer
 
-var _bg: Panel
 var _bar: HBoxContainer
 var _caste_buttons := {}   # AntTypes.Type -> CasteButton
 var _erase_button: CasteButton
@@ -21,15 +20,6 @@ var _erase_button: CasteButton
 func _ready() -> void:
 	layer = 5
 	process_mode = Node.PROCESS_MODE_ALWAYS
-
-	_bg = Panel.new()
-	var bgsb := StyleBoxFlat.new()
-	bgsb.bg_color = Color(0.09, 0.08, 0.06, 0.74)
-	bgsb.set_corner_radius_all(18)
-	bgsb.set_border_width_all(2)
-	bgsb.border_color = Color(0.0, 0.0, 0.0, 0.4)
-	_bg.add_theme_stylebox_override("panel", bgsb)
-	add_child(_bg)
 
 	_bar = HBoxContainer.new()
 	_bar.add_theme_constant_override("separation", GAP)
@@ -70,10 +60,8 @@ func _process(_delta: float) -> void:
 func _reposition() -> void:
 	var vp := get_viewport().get_visible_rect().size
 	_bar.size = _bar.get_combined_minimum_size()
-	_bar.position = Vector2((vp.x - _bar.size.x) * 0.5, vp.y - _bar.size.y - MARGIN)
-	var pad := 10.0
-	_bg.position = _bar.position - Vector2(pad, pad)
-	_bg.size = _bar.size + Vector2(pad * 2.0, pad * 2.0)
+	# bottom-left, like the original's caste cluster
+	_bar.position = Vector2(MARGIN, vp.y - _bar.size.y - MARGIN)
 
 func _on_caste(type: int) -> void:
 	drawer.set_caste(type)

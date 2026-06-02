@@ -29,8 +29,7 @@ func _ready() -> void:
 	_topbar = _TOPBAR.new()
 	_topbar.colony = colony
 	_topbar.director = director
-	_topbar.set_anchors_preset(Control.PRESET_TOP_WIDE)
-	_topbar.offset_bottom = 108
+	_topbar.set_anchors_preset(Control.PRESET_FULL_RECT)
 	_topbar.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_topbar)
 
@@ -78,9 +77,9 @@ func _process(_delta: float) -> void:
 	_pause_btn.position = Vector2(vp.x - _pause_btn.size.x - 16, 14)
 	_speed_btn.position = Vector2(_pause_btn.position.x - _speed_btn.size.x - 10, 14)
 
-	# Call Wave: only during prep, centred just under the wave readout
+	# Call Wave: only during prep, just above the food readout
 	_call_btn.visible = director.is_prep()
-	_call_btn.position = Vector2((vp.x - _call_btn.size.x) * 0.5, 116)
+	_call_btn.position = Vector2((vp.x - _call_btn.size.x) * 0.5, vp.y - 140)
 
 	# win/lose overlay
 	if director.is_victory() or director.is_defeat():
