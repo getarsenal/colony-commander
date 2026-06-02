@@ -41,7 +41,7 @@ func _draw() -> void:
 		_text(f, Vector2(26, 52), sub, 18, Color(0.82, 0.78, 0.68))
 
 	# --- score (top-right, below the buttons) ---
-	var score: int = director.enemies_killed * 10 + colony.food
+	var score: int = director.enemies_killed * 10
 	var score_str := "Score: %d" % score
 	var sw := f.get_string_size(score_str, HORIZONTAL_ALIGNMENT_LEFT, -1, 22).x
 	_text(f, Vector2(w - 20 - sw, 66), score_str, 22, Color(0.92, 0.90, 0.80))

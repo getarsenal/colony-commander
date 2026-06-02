@@ -130,8 +130,10 @@ sim/projectile.gd      # Spitter acid glob (pooled)
 sim/wave_director.gd   # spawns enemy waves; owns enemy/carcass/projectile pools
 fx/fx_layer.gd         # juice: puffs, floating "+food" popups, screen shake
 fx/fx_bit.gd           # one throwaway puff/label flourish
-ui/touch_controls.gd   # bottom caste / erase / clear panel for mobile + web
-ui/caste_button.gd     # one tactile, icon-drawn control-panel button
+ui/touch_controls.gd   # bottom-left circular caste / erase / clear panel
+ui/caste_button.gd     # one round caste/tool button (drawn ant/erase/clear glyph)
+ui/spawn_panel.gd      # bottom-right spawn cluster: spend food to grow each caste
+ui/spawn_button.gd     # one round spawn button (count + ant + food cost)
 ui/hud.gd              # HUD: Call-Wave / speed / pause buttons + win-lose overlay
 ui/hud_topbar.gd       # top status bar: hill health, food, wave progress
 .github/workflows/     # deploy-web.yml: export HTML5 + publish to GitHub Pages

@@ -13,6 +13,7 @@ var colony: Colony
 var trail_container: Node2D
 var trail_drawer: TrailDrawer
 var touch_controls: TouchControls
+var spawn_panel: SpawnPanel
 var director: WaveDirector
 var fx: FxLayer
 var hud: HUD
@@ -100,6 +101,12 @@ func _ready() -> void:
 	touch_controls.drawer = trail_drawer
 	add_child(touch_controls)
 
+	# --- spawn economy cluster (bottom-right): spend food to grow each caste ---
+	spawn_panel = SpawnPanel.new()
+	spawn_panel.name = "SpawnPanel"
+	spawn_panel.colony = colony
+	add_child(spawn_panel)
+
 	# --- HUD: top status bar, wave controls, win/lose overlay ---
 	hud = HUD.new()
 	hud.name = "HUD"
@@ -119,7 +126,7 @@ func _build_hint() -> void:
 	_hint.position = Vector2(24, 92)
 	_hint.add_theme_font_size_override("font_size", 18)
 	_hint.add_theme_color_override("font_color", Color(0.86, 0.85, 0.78, 0.7))
-	_hint.text = "DRAG from the hill to lead ants. Soldiers/Spitters fight; Workers\nharvest the kills for food."
+	_hint.text = "DRAG from the hill to lead ants. Workers harvest kills for food;\nspend it on the spawn buttons (bottom-right) to grow each caste."
 	layer.add_child(_hint)
 
 func _process(_delta: float) -> void:
