@@ -16,6 +16,7 @@ var _topbar: Control
 var _call_btn: Button
 var _speed_btn: Button
 var _pause_btn: Button
+var _mute_btn: Button
 var _overlay: Control
 var _overlay_title: Label
 var _overlay_sub: Label
@@ -42,6 +43,9 @@ func _ready() -> void:
 	_pause_btn = _make_button("Pause", Color(0.20, 0.22, 0.26), Vector2(150, 66))
 	_pause_btn.pressed.connect(_on_pause)
 	add_child(_pause_btn)
+	_mute_btn = _make_button("Sound", Color(0.20, 0.22, 0.26), Vector2(112, 66))
+	_mute_btn.pressed.connect(_on_mute)
+	add_child(_mute_btn)
 
 	_build_overlay()
 
@@ -76,6 +80,7 @@ func _process(_delta: float) -> void:
 	# top-right controls
 	_pause_btn.position = Vector2(vp.x - _pause_btn.size.x - 16, 14)
 	_speed_btn.position = Vector2(_pause_btn.position.x - _speed_btn.size.x - 10, 14)
+	_mute_btn.position = Vector2(_speed_btn.position.x - _mute_btn.size.x - 10, 14)
 
 	# Call Wave: only during prep, just above the food readout
 	_call_btn.visible = director.is_prep()
@@ -105,19 +110,28 @@ func _center(c: Control, vp: Vector2, dy: float) -> void:
 # --- button callbacks ---------------------------------------------------------
 
 func _on_call() -> void:
+	Audio.sfx("click", -8.0)
 	director.call_wave()
 
 func _on_speed() -> void:
+	Audio.sfx("click", -10.0)
 	_fast = not _fast
 	_speed_btn.text = "2x" if _fast else "1x"
 	if main != null:
 		main.set_game_speed(_fast)
 
 func _on_pause() -> void:
+	Audio.sfx("click", -10.0)
 	var paused: bool = main.toggle_pause() if main != null else false
 	_pause_btn.text = "Resume" if paused else "Pause"
 
+func _on_mute() -> void:
+	Audio.muted = not Audio.muted
+	Audio.set_muted(Audio.muted)
+	_mute_btn.text = "Muted" if Audio.muted else "Sound"
+
 func _on_restart() -> void:
+	Audio.sfx("click", -8.0)
 	# leaving any paused/fast state cleanly
 	_fast = false
 	_speed_btn.text = "1x"

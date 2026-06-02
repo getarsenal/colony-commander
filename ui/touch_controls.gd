@@ -64,10 +64,13 @@ func _reposition() -> void:
 	_bar.position = Vector2(MARGIN, vp.y - _bar.size.y - MARGIN)
 
 func _on_caste(type: int) -> void:
+	Audio.sfx("click", -10.0)
 	drawer.set_caste(type)
 
 func _on_erase() -> void:
+	Audio.sfx("click", -10.0)
 	drawer.toggle_erase()
 
 func _on_clear() -> void:
+	Audio.sfx("click", -10.0)
 	drawer.clear_all()

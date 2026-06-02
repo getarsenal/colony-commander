@@ -130,6 +130,8 @@ sim/projectile.gd      # Spitter acid glob (pooled)
 sim/wave_director.gd   # spawns enemy waves; owns enemy/carcass/projectile pools
 fx/fx_layer.gd         # juice: puffs, floating "+food" popups, screen shake
 fx/fx_bit.gd           # one throwaway puff/label flourish
+audio/audio.gd         # autoload: synthesises all SFX + ambient bed at startup
+tools/bake_sprites.gd  # offline baker -> assets/sprites/*.png (original art)
 ui/touch_controls.gd   # bottom-left circular caste / erase / clear panel
 ui/caste_button.gd     # one round caste/tool button (drawn ant/erase/clear glyph)
 ui/spawn_panel.gd      # bottom-right spawn cluster: spend food to grow each caste

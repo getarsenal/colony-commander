@@ -39,4 +39,5 @@ func _process(_delta: float) -> void:
 		b.affordable = colony.food >= b.cost
 
 func _on_buy(t: int) -> void:
-	colony.buy_caste(t)
+	if not colony.buy_caste(t):
+		Audio.sfx("deny", -10.0)

@@ -36,6 +36,7 @@ var enemies_killed := 0
 var _to_spawn := 0
 var _spawn_timer := 0.0
 var _boss_pending := false
+var _announced := false   # one-shot win/lose sting guard
 
 var _enemy_pool: Array = []
 var _enemy_free: Array = []
@@ -96,7 +97,9 @@ func _process(delta: float) -> void:
 					state = State.PREP
 					prep_timer = PREP_TIME
 		State.VICTORY, State.DEFEAT:
-			pass
+			if not _announced:
+				_announced = true
+				Audio.sfx("victory" if state == State.VICTORY else "defeat", 0.0)
 
 func _start_wave() -> void:
 	_to_spawn = WAVE_COUNTS[wave_index]
@@ -245,6 +248,7 @@ func reset_level() -> void:
 	enemies_killed = 0
 	_to_spawn = 0
 	_spawn_timer = 0.0
+	_announced = false
 
 # --- spatial queries used by ants ---------------------------------------------
 

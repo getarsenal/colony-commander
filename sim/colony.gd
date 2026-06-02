@@ -65,6 +65,7 @@ func buy_caste(t: int) -> bool:
 		return false
 	food -= cost
 	pop[t] = pop.get(t, 0) + SPAWN_BATCH
+	Audio.sfx("buy", -4.0)
 	if fx != null:
 		fx.popup(hill_pos + Vector2(0, -84), "+%d %s" % [SPAWN_BATCH, AntTypes.name_of(t)], AntTypes.color_of(t))
 	return true
@@ -147,6 +148,7 @@ func damage_hill(n: float) -> void:
 	if hill_hp <= 0.0:
 		return  # already overrun; the director is in DEFEAT
 	hill_hp = max(0.0, hill_hp - n)
+	Audio.sfx("hill", -3.0)
 	if fx != null:
 		fx.add_shake(0.35)
 		fx.puff(hill_pos, Color(0.9, 0.3, 0.2), 16.0)

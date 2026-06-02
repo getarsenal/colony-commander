@@ -195,6 +195,7 @@ func _update_combat(delta: float) -> void:
 					attack_timer = SPIT_INTERVAL
 					rotation = (e.position - position).angle()
 					colony.fire_projectile(position, e)
+					Audio.sfx("spit", -14.0)
 
 ## A working Worker grabs the nearest carcass in reach and heads home with it.
 func _try_harvest() -> void:
@@ -207,6 +208,7 @@ func _try_harvest() -> void:
 	if v > 0:
 		carry_value = v
 		carrying = true
+		Audio.sfx("harvest", -8.0)
 		if colony.fx != null:
 			colony.fx.puff(position, Color(0.95, 0.85, 0.35), 8.0)
 		_begin_return()

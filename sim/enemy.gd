@@ -124,6 +124,10 @@ func take_damage(amount: float) -> void:
 		_die()
 
 func _die() -> void:
+	if kind == Kind.BOSS:
+		Audio.sfx("boss", 0.0)
+	else:
+		Audio.sfx("kill")
 	if director != null:
 		director.on_enemy_killed(position, food_value, kind == Kind.BOSS)
 	_despawn()
