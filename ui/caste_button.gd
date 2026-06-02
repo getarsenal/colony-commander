@@ -22,8 +22,10 @@ func _ready() -> void:
 	custom_minimum_size = Vector2(W, HT)
 
 func _gui_input(event: InputEvent) -> void:
-	if (event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT) \
-			or (event is InputEventScreenTouch and event.pressed):
+	# Handle ONLY the mouse event. The project emulates mouse-from-touch, so a
+	# phone tap already arrives as a mouse button — handling ScreenTouch too would
+	# fire twice per tap, which silently cancelled the Erase toggle on mobile.
+	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
 		pressed.emit()
 		accept_event()
 
