@@ -5,7 +5,7 @@
 ## ground + anthill + hill-HP ring; and routes the HUD's speed/pause/restart.
 extends Node2D
 
-const ZOOM := 2.6   # camera zoom — frames the colony close, like the original
+const ZOOM := 1.95  # base res shrank to 960x540 (bigger UI); zoom drops to match world framing
 
 var hill_pos := Vector2(640, 360)
 

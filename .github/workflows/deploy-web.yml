@@ -58,9 +58,24 @@ jobs:
           mkdir -p build/web
           godot --headless --path . --export-release "Web" build/web/index.html
           test -f build/web/index.wasm
-          # GitHub Pages won't serve a directory index named index.html as the
-          # site root unless it's named index.html (it is) — nothing else needed.
           ls -lh build/web
+
+      - name: Cache-bust asset filenames
+        run: |
+          set -euo pipefail
+          # Browsers cache index.pck / index.wasm by name, serving stale code after
+          # a deploy. Give every build unique asset URLs (hash = commit sha) so a
+          # fresh index.html always pulls the matching, uncached assets.
+          cd build/web
+          V="${GITHUB_SHA::8}"
+          for f in index.js index.wasm index.pck index.audio.worklet.js index.png index.icon.png index.apple-touch-icon.png; do
+            [ -f "$f" ] && mv "$f" "${f/index./index.$V.}"
+          done
+          # repoint every index.<ext> reference, then the engine's executable name
+          sed -i "s|index\.|index.$V.|g" index.html
+          sed -i "s|executable\":\"index\"|executable\":\"index.$V\"|" index.html
+          test -f "index.$V.wasm" && test -f "index.$V.pck"
+          ls -lh
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
