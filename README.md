@@ -124,7 +124,7 @@ sim/ant.gd             # lightweight follower: progress, state, sway, spacing
 sim/trail.gd           # Curve2D wrapper: draw, sample, spawn metering, erase
 sim/colony.gd          # ant POOL, population cap, spawn budget, food stub
 sim/trail_drawer.gd    # input -> Curve2D, caste colour coding, erase/redraw
-sim/enemy.gd           # attacking bug: advances on the hill, fights ants (pooled)
+sim/enemy.gd           # attacking bugs: beetle/ladybug/pillbug/fly/boss (pooled)
 sim/carcass.gd         # harvestable food dropped by a slain enemy (pooled)
 sim/projectile.gd      # Spitter acid glob (pooled)
 sim/wave_director.gd   # spawns enemy waves; owns enemy/carcass/projectile pools

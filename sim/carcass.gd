@@ -15,6 +15,7 @@ var claimed := false
 var _alive := false
 var director = null
 var _bob := 0.0
+var _bscale := 1.0
 
 func _ready() -> void:
 	visible = false
@@ -25,10 +26,11 @@ func init_pooled(p_director) -> void:
 	_alive = false
 	visible = false
 
-func drop_at(pos: Vector2) -> void:
+func drop_at(pos: Vector2, value: int = FOOD_VALUE) -> void:
 	position = pos
 	rotation = randf() * TAU
-	food_value = FOOD_VALUE
+	food_value = value
+	_bscale = clampf(0.85 + value * 0.035, 0.85, 2.2)  # bigger bodies = bigger husks
 	claimed = false
 	_alive = true
 	_bob = randf() * TAU
@@ -65,8 +67,9 @@ func _process(delta: float) -> void:
 
 func _draw() -> void:
 	# a curled, pale husk with a soft food-glow so it reads as "grab me"
+	var b := BODY * _bscale
 	var glow := 0.5 + sin(_bob) * 0.12
-	draw_circle(Vector2.ZERO, BODY + 3.0, Color(0.95, 0.85, 0.35, 0.12 * glow))
-	draw_circle(Vector2.ZERO, BODY, Color(0.55, 0.50, 0.30))
-	draw_circle(Vector2(-2.0, -1.0), BODY * 0.55, Color(0.68, 0.62, 0.40))
-	draw_arc(Vector2.ZERO, BODY + 1.5, 0.0, TAU, 10, Color(0.30, 0.26, 0.16), 1.2)
+	draw_circle(Vector2.ZERO, b + 3.0, Color(0.95, 0.85, 0.35, 0.12 * glow))
+	draw_circle(Vector2.ZERO, b, Color(0.55, 0.50, 0.30))
+	draw_circle(Vector2(-2.0, -1.0) * _bscale, b * 0.55, Color(0.68, 0.62, 0.40))
+	draw_arc(Vector2.ZERO, b + 1.5, 0.0, TAU, 10, Color(0.30, 0.26, 0.16), 1.2)

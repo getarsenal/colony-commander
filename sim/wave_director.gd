@@ -35,6 +35,7 @@ var enemies_killed := 0
 
 var _to_spawn := 0
 var _spawn_timer := 0.0
+var _boss_pending := false
 
 var _enemy_pool: Array = []
 var _enemy_free: Array = []
@@ -100,11 +101,32 @@ func _process(delta: float) -> void:
 func _start_wave() -> void:
 	_to_spawn = WAVE_COUNTS[wave_index]
 	_spawn_timer = 0.0
+	_boss_pending = wave_index >= 3   # a boss arrives from wave 4 on
 	state = State.SPAWNING
 
 func _spawn_one() -> void:
 	var e = _enemy_pool[_enemy_free.pop_back()]
-	e.spawn(_edge_spawn_point())
+	e.spawn(_edge_spawn_point(), _pick_kind())
+
+## Wave-scaled bug composition (boss saved for the tail of qualifying waves).
+func _pick_kind() -> int:
+	if _boss_pending and _to_spawn <= 1:
+		_boss_pending = false
+		return Enemy.Kind.BOSS
+	var w := wave_index
+	var roll := randf()
+	if w <= 1:
+		return Enemy.Kind.LADYBUG if roll < 0.30 else Enemy.Kind.BEETLE
+	elif w <= 3:
+		if roll < 0.20: return Enemy.Kind.PILLBUG
+		elif roll < 0.45: return Enemy.Kind.FLY
+		elif roll < 0.70: return Enemy.Kind.LADYBUG
+		return Enemy.Kind.BEETLE
+	else:
+		if roll < 0.34: return Enemy.Kind.PILLBUG
+		elif roll < 0.58: return Enemy.Kind.FLY
+		elif roll < 0.80: return Enemy.Kind.LADYBUG
+		return Enemy.Kind.BEETLE
 
 ## Player summons the pending wave immediately (only meaningful during PREP).
 func call_wave() -> void:
@@ -154,21 +176,24 @@ func _edge_spawn_point() -> Vector2:
 
 # --- callbacks from entities --------------------------------------------------
 
-func on_enemy_killed(pos: Vector2) -> void:
+func on_enemy_killed(pos: Vector2, food_value: int, is_boss: bool) -> void:
 	enemies_killed += 1
-	_drop_carcass(pos)
+	_drop_carcass(pos, food_value)
 	if fx != null:
-		fx.puff(pos, Color(0.7, 0.15, 0.12), 18.0)
+		fx.puff(pos, Color(0.7, 0.15, 0.12), 30.0 if is_boss else 18.0)
+		if is_boss:
+			fx.add_shake(0.5)
+			fx.popup(pos + Vector2(0, -24), "BOSS DOWN", Color(0.95, 0.6, 0.2))
 
 func splash(pos: Vector2) -> void:
 	if fx != null:
 		fx.puff(pos, Color(0.55, 0.85, 0.25), 9.0)
 
-func _drop_carcass(pos: Vector2) -> void:
+func _drop_carcass(pos: Vector2, value: int) -> void:
 	if _carcass_free.is_empty():
 		return
 	var c = _carcass_pool[_carcass_free.pop_back()]
-	c.drop_at(pos)
+	c.drop_at(pos, value)
 
 func fire_projectile(from: Vector2, target) -> void:
 	if _proj_free.is_empty():
