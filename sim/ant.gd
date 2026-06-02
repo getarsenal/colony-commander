@@ -286,7 +286,7 @@ func recycle() -> void:
 	visible = false
 
 const ANT_TEX := preload("res://assets/sprites/ant.png")
-const ANT_W := 13.0
+const ANT_W := 15.0
 
 func _draw() -> void:
 	var h := ANT_W * ANT_TEX.get_height() / ANT_TEX.get_width()

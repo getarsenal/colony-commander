@@ -87,6 +87,9 @@ func _ready() -> void:
 	terrain.hill_pos = hill_pos
 	add_child(terrain)
 
+	# full-screen warm grade + vignette (above world, below UI)
+	add_child(Grade.new())
+
 	# --- input / drawing ---
 	trail_drawer = TrailDrawer.new()
 	trail_drawer.name = "TrailDrawer"

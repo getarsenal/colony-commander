@@ -18,6 +18,10 @@ func _initialize() -> void:
 	_bake_carcass()
 	_bake_fern()
 	_bake_flower()
+	_bake_mushroom()
+	_bake_rock()
+	_bake_bigleaf()
+	_bake_vignette()
 	_bake_beetle()
 	_bake_ladybug()
 	_bake_pillbug()
@@ -100,17 +104,18 @@ func _bake_ant() -> void:
 	# points +X (head to the right) to match in-game rotation
 	var img := _img(44, 36)
 	var cx := 22.0; var cy := 18.0
-	var dark := Color(0.26, 0.16, 0.10)
-	_shadow(img, cx - 1, cy + 4, 14, 7, 0.28)
+	# warm reddish-brown so ants pop against dark dotted trails
+	var dark := Color(0.46, 0.27, 0.13)
+	_shadow(img, cx - 1, cy + 4, 14, 7, 0.30)
 	for s in [-1.0, 1.0]:
-		_line(img, Vector2(cx, cy), Vector2(cx - 10, cy + s * 9), dark.darkened(0.2), 1.8)
-		_line(img, Vector2(cx, cy), Vector2(cx - 1, cy + s * 11), dark.darkened(0.2), 1.8)
-		_line(img, Vector2(cx, cy), Vector2(cx + 7, cy + s * 9), dark.darkened(0.2), 1.8)
-	_ball(img, cx - 9, cy, 8.0, dark)            # abdomen
-	_ball(img, cx, cy, 5.5, dark.lightened(0.05))# thorax
-	_ball(img, cx + 8, cy, 5.0, dark.lightened(0.08))  # head
-	_line(img, Vector2(cx + 11, cy - 2), Vector2(cx + 17, cy - 6), dark, 1.4)
-	_line(img, Vector2(cx + 11, cy + 2), Vector2(cx + 17, cy + 6), dark, 1.4)
+		_line(img, Vector2(cx, cy), Vector2(cx - 10, cy + s * 9), Color(0.16, 0.10, 0.06), 1.8)
+		_line(img, Vector2(cx, cy), Vector2(cx - 1, cy + s * 11), Color(0.16, 0.10, 0.06), 1.8)
+		_line(img, Vector2(cx, cy), Vector2(cx + 7, cy + s * 9), Color(0.16, 0.10, 0.06), 1.8)
+	_ball(img, cx - 9, cy, 8.0, dark, 0.5, 0.8)            # abdomen
+	_ball(img, cx, cy, 5.5, dark.lightened(0.08), 0.5, 0.8)# thorax
+	_ball(img, cx + 8, cy, 5.0, dark.lightened(0.12), 0.5, 0.8)  # head
+	_line(img, Vector2(cx + 11, cy - 2), Vector2(cx + 17, cy - 6), Color(0.16, 0.10, 0.06), 1.4)
+	_line(img, Vector2(cx + 11, cy + 2), Vector2(cx + 17, cy + 6), Color(0.16, 0.10, 0.06), 1.4)
 	_save(img, "ant.png")
 
 func _bake_carcass() -> void:
@@ -228,6 +233,52 @@ func _bake_flower() -> void:
 	_ball(img, cx, cy, 8, petal.lightened(0.1), 0.5, 0.5)
 	_ball(img, cx, cy, 5, Color(0.97, 0.84, 0.34), 0.55, 0.6)
 	_save(img, "flower.png")
+
+func _bake_mushroom() -> void:
+	var img := _img(48, 58)
+	var cx := 24.0
+	_shadow(img, cx, 52, 15, 6, 0.28)
+	# stem
+	_ball(img, cx, 42, 7, Color(0.86, 0.82, 0.70), 0.5, 0.3, 1.5)
+	# cap
+	_ball(img, cx, 24, 18, Color(0.82, 0.22, 0.18), 0.45, 0.6, 0.62)
+	for sp in [Vector2(-9, -2), Vector2(7, -3), Vector2(0, 4), Vector2(-3, -8), Vector2(11, 4)]:
+		_ball(img, cx + sp.x, 24 + sp.y, 2.6, Color(0.96, 0.93, 0.86), 0.7, 0.2)
+	_save(img, "mushroom.png")
+
+func _bake_rock() -> void:
+	var img := _img(54, 40)
+	_shadow(img, 27, 28, 22, 9, 0.32)
+	_ball(img, 27, 22, 20, Color(0.46, 0.45, 0.47), 0.4, 0.35, 0.62)
+	_ball(img, 20, 16, 8, Color(0.54, 0.53, 0.55), 0.45, 0.4, 0.7)  # facet
+	_save(img, "rock.png")
+
+func _bake_bigleaf() -> void:
+	var img := _img(132, 132)
+	var cx := 66.0; var cy := 70.0
+	_shadow(img, cx, cy + 8, 52, 26, 0.24)
+	# big rounded leaf body (squashed lit ball), green
+	_ball(img, cx, cy, 56, Color(0.21, 0.40, 0.16), 0.45, 0.35, 0.62)
+	_ball(img, cx - 14, cy - 12, 26, Color(0.27, 0.47, 0.20), 0.5, 0.4, 0.62)  # sheen
+	# midrib + side veins
+	_line(img, Vector2(cx, cy + 34), Vector2(cx, cy - 34), Color(0.14, 0.28, 0.11), 2.4)
+	for i in range(-3, 4):
+		var y: float = cy + i * 9.0
+		_line(img, Vector2(cx, y), Vector2(cx - 36, y - 12), Color(0.15, 0.30, 0.12), 1.4)
+		_line(img, Vector2(cx, y), Vector2(cx + 36, y - 12), Color(0.15, 0.30, 0.12), 1.4)
+	_save(img, "bigleaf.png")
+
+func _bake_vignette() -> void:
+	var sz := 256
+	var img := _img(sz, sz)
+	var c := sz * 0.5
+	for y in range(sz):
+		for x in range(sz):
+			var d := Vector2(x + 0.5 - c, y + 0.5 - c).length() / (c * 1.414)
+			var a := clampf((d - 0.52) / 0.48, 0.0, 1.0)
+			a = a * a * 0.55
+			img.set_pixel(x, y, Color(0.04, 0.03, 0.02, a))
+	_save(img, "vignette.png")
 
 func _bake_hill() -> void:
 	var sz := 240
