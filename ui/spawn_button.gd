@@ -6,9 +6,9 @@ extends Control
 
 signal buy
 
-const W := 96.0
-const HT := 130.0
-const RAD := 38.0
+const W := 112.0
+const HT := 150.0
+const RAD := 44.0
 
 var caste_type: int = 0
 var accent := Color.WHITE
@@ -31,20 +31,20 @@ func _process(_delta: float) -> void:
 func _draw() -> void:
 	var f := ThemeDB.fallback_font
 	var dim := 1.0 if affordable else 0.45
-	var c := Vector2(size.x * 0.5, 50.0)
+	var c := Vector2(size.x * 0.5, 64.0)
 
 	# count (top)
 	if f != null:
 		var cs := str(count)
-		var cw := f.get_string_size(cs, HORIZONTAL_ALIGNMENT_LEFT, -1, 22).x
-		draw_string(f, Vector2((size.x - cw) * 0.5 + 1, 21), cs, HORIZONTAL_ALIGNMENT_LEFT, -1, 22, Color(0, 0, 0, 0.6))
-		draw_string(f, Vector2((size.x - cw) * 0.5, 20), cs, HORIZONTAL_ALIGNMENT_LEFT, -1, 22, Color(0.95, 0.95, 0.9, dim))
+		var cw := f.get_string_size(cs, HORIZONTAL_ALIGNMENT_LEFT, -1, 24).x
+		draw_string(f, Vector2((size.x - cw) * 0.5 + 1, 9), cs, HORIZONTAL_ALIGNMENT_LEFT, -1, 24, Color(0, 0, 0, 0.6))
+		draw_string(f, Vector2((size.x - cw) * 0.5, 8), cs, HORIZONTAL_ALIGNMENT_LEFT, -1, 24, Color(0.95, 0.95, 0.9, dim))
 
 	# disc + ring
 	draw_circle(c, RAD, Color(0.15, 0.12, 0.08, 0.97 * (0.7 + 0.3 * dim)))
 	draw_circle(c - Vector2(0, RAD * 0.3), RAD * 0.68, Color(0.21, 0.17, 0.11, 0.6 * dim))
-	draw_arc(c, RAD - 1.0, 0.0, TAU, 36, Color(accent, dim), 3.5, true)
-	_draw_ant(c, 1.3, dim)
+	draw_arc(c, RAD - 1.0, 0.0, TAU, 36, Color(accent, dim), 4.0, true)
+	_draw_ant(c, 1.55, dim)
 
 	# cost (bottom) with a little food pip
 	if f != null:

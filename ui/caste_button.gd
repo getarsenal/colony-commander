@@ -8,9 +8,9 @@ signal pressed
 
 enum Kind { CASTE, ERASE, CLEAR }
 
-const W := 104.0
-const HT := 128.0
-const RAD := 44.0
+const W := 118.0
+const HT := 142.0
+const RAD := 50.0
 
 var kind: int = Kind.CASTE
 var caste_type: int = 0

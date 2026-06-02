@@ -51,7 +51,7 @@ func _process(delta: float) -> void:
 		return
 	if is_instance_valid(_target) and _target.is_alive() \
 			and position.distance_to(_target.position) <= HIT_RADIUS:
-		_target.take_damage(DAMAGE)
+		_target.take_damage(DAMAGE, false)  # ranged: damages but doesn't pin the bug
 		if director != null:
 			director.splash(position)
 		_despawn()

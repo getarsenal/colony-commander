@@ -304,8 +304,7 @@ func _detach_and_free_return() -> void:
 func _arrive_home() -> void:
 	if carrying and colony != null:
 		colony.add_food(carry_value)
-		if colony.fx != null:
-			colony.fx.popup(colony.hill_pos + Vector2(0, -30), "+%d" % carry_value, Color(0.95, 0.85, 0.35))
+		# (no per-delivery toast — the Food counter shows income; avoids toast spam)
 		carrying = false
 		carry_value = 0
 	if colony != null:

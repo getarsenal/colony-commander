@@ -124,12 +124,13 @@ func _advance(delta: float) -> void:
 	position += to_hill / d * speed * delta
 	rotation = to_hill.angle()
 
-func take_damage(amount: float) -> void:
+func take_damage(amount: float, melee := true) -> void:
 	if state == State.IDLE:
 		return
 	hp -= amount
 	_hit_flash = 0.12
-	_dmg_timer = 0.0   # being hurt -> stop and fight back
+	if melee:
+		_dmg_timer = 0.0   # only a melee blocker pins a bug; ranged fire doesn't stall it
 	if hp <= 0.0:
 		_die()
 

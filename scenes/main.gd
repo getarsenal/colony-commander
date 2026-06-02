@@ -126,10 +126,10 @@ func _build_hint() -> void:
 	layer.layer = 4
 	add_child(layer)
 	_hint = Label.new()
-	_hint.position = Vector2(24, 92)
+	_hint.position = Vector2(24, 130)
 	_hint.add_theme_font_size_override("font_size", 18)
-	_hint.add_theme_color_override("font_color", Color(0.86, 0.85, 0.78, 0.7))
-	_hint.text = "DRAG from the hill to lead ants. Workers harvest kills for food;\nspend it on the spawn buttons (bottom-right) to grow each caste."
+	_hint.add_theme_color_override("font_color", Color(0.86, 0.85, 0.78, 0.65))
+	_hint.text = "Drag from the hill to lead ants."
 	layer.add_child(_hint)
 
 func _process(_delta: float) -> void:
