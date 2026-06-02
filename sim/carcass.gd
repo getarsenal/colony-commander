@@ -65,11 +65,11 @@ func _process(delta: float) -> void:
 		return
 	_bob += delta * 3.0
 
+const TEX := preload("res://assets/sprites/carcass.png")
+
 func _draw() -> void:
-	# a curled, pale husk with a soft food-glow so it reads as "grab me"
-	var b := BODY * _bscale
+	# a pale husk with a soft food-glow so it reads as "grab me"
+	var sz := 18.0 * _bscale
 	var glow := 0.5 + sin(_bob) * 0.12
-	draw_circle(Vector2.ZERO, b + 3.0, Color(0.95, 0.85, 0.35, 0.12 * glow))
-	draw_circle(Vector2.ZERO, b, Color(0.55, 0.50, 0.30))
-	draw_circle(Vector2(-2.0, -1.0) * _bscale, b * 0.55, Color(0.68, 0.62, 0.40))
-	draw_arc(Vector2.ZERO, b + 1.5, 0.0, TAU, 10, Color(0.30, 0.26, 0.16), 1.2)
+	draw_circle(Vector2.ZERO, sz * 0.62, Color(0.95, 0.85, 0.35, 0.16 * glow))
+	draw_texture_rect(TEX, Rect2(-sz * 0.5, -sz * 0.5, sz, sz), false)

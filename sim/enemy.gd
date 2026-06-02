@@ -20,6 +20,17 @@ const STATS := {
 const TOUCH_RANGE := 15.0
 const ATTACK_INTERVAL := 0.7
 
+const TEX := {
+	Kind.BEETLE:  preload("res://assets/sprites/bug_beetle.png"),
+	Kind.LADYBUG: preload("res://assets/sprites/bug_ladybug.png"),
+	Kind.PILLBUG: preload("res://assets/sprites/bug_pillbug.png"),
+	Kind.FLY:     preload("res://assets/sprites/bug_fly.png"),
+	Kind.BOSS:    preload("res://assets/sprites/bug_boss.png"),
+}
+const DRAW_W := {
+	Kind.BEETLE: 24.0, Kind.LADYBUG: 22.0, Kind.PILLBUG: 26.0, Kind.FLY: 24.0, Kind.BOSS: 56.0,
+}
+
 var state: int = State.IDLE
 var kind: int = Kind.BEETLE
 var hp := 30.0
@@ -131,85 +142,18 @@ func force_despawn() -> void:
 # --- drawing ------------------------------------------------------------------
 
 func _draw() -> void:
-	match kind:
-		Kind.LADYBUG: _draw_ladybug()
-		Kind.PILLBUG: _draw_pillbug()
-		Kind.FLY: _draw_fly()
-		Kind.BOSS: _draw_boss()
-		_: _draw_beetle()
+	var tex: Texture2D = TEX[kind]
+	var w: float = DRAW_W[kind]
+	var h := w * tex.get_height() / tex.get_width()
+	var mod := Color(1, 1, 1)
+	if _hit_flash > 0.0:
+		mod = mod.lerp(Color(1.7, 1.7, 1.7), _hit_flash / 0.12)
+	# subtle walking bob via vertical squash
+	var bob := 1.0 + sin(_wiggle) * 0.05
+	draw_texture_rect(tex, Rect2(-w * 0.5, -h * 0.5 * bob, w, h * bob), false, mod)
 	if hp < max_hp:
-		_draw_hp()
-
-func _flash(c: Color) -> Color:
-	return c.lerp(Color.WHITE, _hit_flash / 0.12) if _hit_flash > 0.0 else c
-
-func _legs(col: Color, b: float, w: float) -> void:
-	for i in 3:
-		var lx := -b * 0.5 + i * b * 0.5
-		var sw := sin(_wiggle + i) * b * 0.3
-		draw_line(Vector2(lx, -b * 0.6), Vector2(lx - b * 0.5, -b - 3.0 + sw), col, w)
-		draw_line(Vector2(lx, b * 0.6), Vector2(lx - b * 0.5, b + 3.0 - sw), col, w)
-
-func _draw_beetle() -> void:
-	var c := _flash(Color(0.18, 0.06, 0.06))
-	_legs(c, body, 1.2)
-	draw_circle(Vector2(-2, 0), body, c)
-	draw_circle(Vector2(body * 0.5, 0), body * 0.7, c)
-	draw_circle(Vector2(-2, 0), body * 0.42, Color(0.7, 0.12, 0.12))
-	draw_line(Vector2(body, -2), Vector2(body + 4, -4), c, 1.4)
-	draw_line(Vector2(body, 2), Vector2(body + 4, 4), c, 1.4)
-
-func _draw_ladybug() -> void:
-	var red := _flash(Color(0.82, 0.16, 0.14))
-	var blk := _flash(Color(0.10, 0.08, 0.07))
-	_legs(blk, body, 1.1)
-	draw_circle(Vector2(body * 0.6, 0), body * 0.55, blk)         # head
-	draw_circle(Vector2(-1, 0), body, red)                        # shell
-	draw_line(Vector2(-body, 0), Vector2(body * 0.4, 0), blk, 1.2)  # wing split
-	for sp in [Vector2(-3, -3), Vector2(-3, 3), Vector2(1, -4), Vector2(1, 4), Vector2(-5, 0)]:
-		draw_circle(sp, 1.5, blk)
-
-func _draw_pillbug() -> void:
-	var g := _flash(Color(0.42, 0.42, 0.46))
-	var gd := _flash(Color(0.28, 0.28, 0.32))
-	_legs(gd, body, 1.1)
-	draw_circle(Vector2(0, 0), body, g)
-	# armoured segments
-	for i in range(-2, 3):
-		var x := i * body * 0.38
-		draw_arc(Vector2(x - body * 0.2, 0), body * 0.9, -PI * 0.5, PI * 0.5, 8, gd, 1.6)
-	draw_circle(Vector2(body * 0.7, 0), body * 0.5, gd)  # head
-
-func _draw_fly() -> void:
-	var c := _flash(Color(0.16, 0.18, 0.22))
-	# beating wings
-	var wf := 0.5 + 0.5 * sin(_wiggle * 3.0)
-	var wing := Color(0.75, 0.82, 0.95, 0.35)
-	draw_circle(Vector2(-2, -body - 1), body * (0.7 + 0.3 * wf), wing)
-	draw_circle(Vector2(-2, body + 1), body * (0.7 + 0.3 * wf), wing)
-	draw_circle(Vector2(-2, 0), body, c)
-	draw_circle(Vector2(body * 0.6, 0), body * 0.6, c)
-	draw_circle(Vector2(body * 0.8, 0), body * 0.3, Color(0.7, 0.2, 0.2))  # red eyes
-
-func _draw_boss() -> void:
-	var o := _flash(Color(0.85, 0.42, 0.12))
-	var od := _flash(Color(0.55, 0.22, 0.06))
-	_legs(od, body, 2.2)
-	# spiky carapace
-	for i in 10:
-		var a := TAU * i / 10.0
-		var dir := Vector2(cos(a), sin(a))
-		draw_line(dir * body * 0.8, dir * (body + 6.0), od, 2.4)
-	draw_circle(Vector2(-2, 0), body, o)
-	draw_circle(Vector2(-2, 0), body * 0.6, od)
-	draw_circle(Vector2(body * 0.7, 0), body * 0.6, o)
-	# mandibles
-	draw_line(Vector2(body, -3), Vector2(body + 8, -7), od, 3.0)
-	draw_line(Vector2(body, 3), Vector2(body + 8, 7), od, 3.0)
-
-func _draw_hp() -> void:
-	var f := clampf(hp / max_hp, 0.0, 1.0)
-	var w := body * 2.4
-	var y := -body - 8.0
-	draw_rect(Rect2(-w * 0.5, y, w, 2.6), Color(0, 0, 0, 0.5))
-	draw_rect(Rect2(-w * 0.5, y, w * f, 2.6), Color(0.4, 0.85, 0.3))
+		var f := clampf(hp / max_hp, 0.0, 1.0)
+		var bw := w * 0.8
+		var y := -h * 0.5 - 6.0
+		draw_rect(Rect2(-bw * 0.5, y, bw, 2.8), Color(0, 0, 0, 0.5))
+		draw_rect(Rect2(-bw * 0.5, y, bw * f, 2.8), Color(0.4, 0.85, 0.3))

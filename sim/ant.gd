@@ -285,25 +285,18 @@ func recycle() -> void:
 	ahead = null
 	visible = false
 
+const ANT_TEX := preload("res://assets/sprites/ant.png")
+const ANT_W := 13.0
+
 func _draw() -> void:
-	var type_color := AntTypes.color_of(ant_type)
-	var body := _base_color
+	var h := ANT_W * ANT_TEX.get_height() / ANT_TEX.get_width()
+	var mod := Color(1, 1, 1)
 	if _hit_flash > 0.0:
-		body = body.lerp(Color.WHITE, _hit_flash / 0.12)  # white pop on a hit
-	# body: abdomen / thorax / head along +X (head forward)
-	draw_circle(Vector2(-4.0, 0.0), 3.2, body)   # abdomen
-	draw_circle(Vector2(0.0, 0.0), 2.4, body)    # thorax
-	draw_circle(Vector2(3.6, 0.0), 2.0, body)    # head
-	# caste marker on the abdomen
-	draw_circle(Vector2(-4.0, 0.0), 1.6, type_color)
-	# antennae
-	draw_line(Vector2(4.6, -0.5), Vector2(7.2, -2.6), body, 0.8)
-	draw_line(Vector2(4.6, 0.5), Vector2(7.2, 2.6), body, 0.8)
-	# three pairs of legs
-	for lx in [-2.0, 0.0, 2.0]:
-		draw_line(Vector2(lx, 0.0), Vector2(lx - 1.0, -4.0), body, 0.8)
-		draw_line(Vector2(lx, 0.0), Vector2(lx - 1.0, 4.0), body, 0.8)
+		mod = mod.lerp(Color(1.7, 1.7, 1.7), _hit_flash / 0.12)  # white pop on a hit
+	draw_texture_rect(ANT_TEX, Rect2(-ANT_W * 0.5, -h * 0.5, ANT_W, h), false, mod)
+	# caste marker on the abdomen (head points +X)
+	draw_circle(Vector2(-ANT_W * 0.24, 0.0), 2.0, AntTypes.color_of(ant_type))
 	# a hauled carcass rides on the worker's back
 	if carrying:
-		draw_circle(Vector2(-5.0, 0.0), 3.0, Color(0.85, 0.75, 0.35))
-		draw_circle(Vector2(-5.0, 0.0), 1.4, Color(0.6, 0.55, 0.3))
+		draw_circle(Vector2(-ANT_W * 0.42, 0.0), 3.0, Color(0.85, 0.75, 0.35))
+		draw_circle(Vector2(-ANT_W * 0.42, 0.0), 1.4, Color(0.6, 0.55, 0.3))
