@@ -30,17 +30,17 @@ func _ready() -> void:
 	_topbar.colony = colony
 	_topbar.director = director
 	_topbar.set_anchors_preset(Control.PRESET_TOP_WIDE)
-	_topbar.offset_bottom = 72
+	_topbar.offset_bottom = 108
 	_topbar.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_topbar)
 
-	_call_btn = _make_button("Call Wave", Color(0.55, 0.40, 0.12), Vector2(158, 46))
+	_call_btn = _make_button("Call Wave", Color(0.55, 0.40, 0.12), Vector2(240, 70))
 	_call_btn.pressed.connect(_on_call)
 	add_child(_call_btn)
-	_speed_btn = _make_button("1x", Color(0.20, 0.22, 0.26), Vector2(58, 44))
+	_speed_btn = _make_button("1x", Color(0.20, 0.22, 0.26), Vector2(88, 66))
 	_speed_btn.pressed.connect(_on_speed)
 	add_child(_speed_btn)
-	_pause_btn = _make_button("Pause", Color(0.20, 0.22, 0.26), Vector2(96, 44))
+	_pause_btn = _make_button("Pause", Color(0.20, 0.22, 0.26), Vector2(150, 66))
 	_pause_btn.pressed.connect(_on_pause)
 	add_child(_pause_btn)
 
@@ -59,13 +59,13 @@ func _build_overlay() -> void:
 	dim.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_overlay.add_child(dim)
 
-	_overlay_title = _make_label(40, HORIZONTAL_ALIGNMENT_CENTER)
+	_overlay_title = _make_label(64, HORIZONTAL_ALIGNMENT_CENTER)
 	_overlay.add_child(_overlay_title)
-	_overlay_sub = _make_label(18, HORIZONTAL_ALIGNMENT_CENTER)
+	_overlay_sub = _make_label(26, HORIZONTAL_ALIGNMENT_CENTER)
 	_overlay_sub.add_theme_color_override("font_color", Color(0.85, 0.85, 0.8))
 	_overlay.add_child(_overlay_sub)
 
-	_restart_btn = _make_button("Restart Level", Color(0.30, 0.45, 0.30), Vector2(214, 56))
+	_restart_btn = _make_button("Restart Level", Color(0.30, 0.45, 0.30), Vector2(300, 78))
 	_restart_btn.pressed.connect(_on_restart)
 	_overlay.add_child(_restart_btn)
 
@@ -75,12 +75,12 @@ func _process(_delta: float) -> void:
 	var vp := get_viewport().get_visible_rect().size
 
 	# top-right controls
-	_pause_btn.position = Vector2(vp.x - _pause_btn.size.x - 12, 10)
-	_speed_btn.position = Vector2(_pause_btn.position.x - _speed_btn.size.x - 8, 10)
+	_pause_btn.position = Vector2(vp.x - _pause_btn.size.x - 16, 14)
+	_speed_btn.position = Vector2(_pause_btn.position.x - _speed_btn.size.x - 10, 14)
 
 	# Call Wave: only during prep, centred just under the wave readout
 	_call_btn.visible = director.is_prep()
-	_call_btn.position = Vector2((vp.x - _call_btn.size.x) * 0.5, 80)
+	_call_btn.position = Vector2((vp.x - _call_btn.size.x) * 0.5, 116)
 
 	# win/lose overlay
 	if director.is_victory() or director.is_defeat():
@@ -134,7 +134,7 @@ func _make_button(text: String, bg: Color, min_size: Vector2) -> Button:
 	b.custom_minimum_size = min_size
 	b.size = min_size
 	b.focus_mode = Control.FOCUS_NONE
-	b.add_theme_font_size_override("font_size", 18)
+	b.add_theme_font_size_override("font_size", 26)
 	b.add_theme_color_override("font_color", Color(0.96, 0.96, 0.92))
 	var sb := StyleBoxFlat.new()
 	sb.bg_color = bg

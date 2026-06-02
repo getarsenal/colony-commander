@@ -5,7 +5,7 @@
 ## ground + anthill + hill-HP ring; and routes the HUD's speed/pause/restart.
 extends Node2D
 
-const ZOOM := 1.5   # camera zoom — frames the colony close, like the original
+const ZOOM := 2.6   # camera zoom — frames the colony close, like the original
 
 var hill_pos := Vector2(640, 360)
 
@@ -119,10 +119,10 @@ func _build_hint() -> void:
 	layer.layer = 4
 	add_child(layer)
 	_hint = Label.new()
-	_hint.position = Vector2(18, 116)
-	_hint.add_theme_font_size_override("font_size", 15)
+	_hint.position = Vector2(22, 196)
+	_hint.add_theme_font_size_override("font_size", 22)
 	_hint.add_theme_color_override("font_color", Color(0.86, 0.85, 0.78, 0.8))
-	_hint.text = "Pick a caste below, then DRAG from the hill: lead Soldiers/Spitters into\nthe bugs, then send Workers onto the kills to harvest food."
+	_hint.text = "Pick a caste below, then DRAG from the hill: lead Soldiers/Spitters\ninto the bugs, then send Workers onto the kills to harvest food."
 	layer.add_child(_hint)
 
 func _process(_delta: float) -> void:

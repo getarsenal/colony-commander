@@ -8,8 +8,8 @@ signal pressed
 
 enum Kind { CASTE, ERASE, CLEAR }
 
-const W := 96.0
-const HT := 86.0
+const W := 132.0
+const HT := 118.0
 
 var kind: int = Kind.CASTE
 var caste_type: int = 0
@@ -45,45 +45,46 @@ func _process(_delta: float) -> void:
 func _draw() -> void:
 	var r := Rect2(Vector2.ZERO, size)
 	(_selected if selected else _normal).draw(get_canvas_item(), r)
-	var c := Vector2(size.x * 0.5, size.y * 0.42)
+	var k := size.y / 86.0   # glyph scale, so icons grow with the button
+	var c := Vector2(size.x * 0.5, size.y * 0.40)
 	match kind:
 		Kind.CASTE:
-			_draw_ant(c)
+			_draw_ant(c, k)
 		Kind.ERASE:
-			_draw_erase(c)
+			_draw_erase(c, k)
 		Kind.CLEAR:
-			_draw_clear(c)
+			_draw_clear(c, k)
 	# label
 	var f := ThemeDB.fallback_font
 	if f != null:
-		var sz := 15
+		var sz := int(round(20 * k))
 		var tw := f.get_string_size(label_text, HORIZONTAL_ALIGNMENT_LEFT, -1, sz).x
 		var col := accent.lerp(Color.WHITE, 0.4) if selected else Color(0.90, 0.88, 0.82)
-		draw_string(f, Vector2((size.x - tw) * 0.5, size.y - 11), label_text, HORIZONTAL_ALIGNMENT_LEFT, -1, sz, col)
+		draw_string(f, Vector2((size.x - tw) * 0.5, size.y - 14 * k), label_text, HORIZONTAL_ALIGNMENT_LEFT, -1, sz, col)
 
-func _draw_ant(c: Vector2) -> void:
+func _draw_ant(c: Vector2, k: float) -> void:
 	var dark := Color(0.11, 0.08, 0.06)
 	for s in [-1.0, 1.0]:
-		draw_line(c, c + Vector2(8 * s, -4), dark, 1.5)
-		draw_line(c, c + Vector2(9 * s, 1), dark, 1.5)
-		draw_line(c, c + Vector2(8 * s, 6), dark, 1.5)
-	draw_circle(c + Vector2(0, 6), 4.6, dark)    # abdomen
-	draw_circle(c, 3.4, dark)                    # thorax
-	draw_circle(c + Vector2(0, -6), 3.2, dark)   # head
-	draw_circle(c + Vector2(0, 6), 2.4, accent)  # caste marker
-	draw_line(c + Vector2(0, -6), c + Vector2(-3.5, -10), dark, 1.2)
-	draw_line(c + Vector2(0, -6), c + Vector2(3.5, -10), dark, 1.2)
+		draw_line(c, c + Vector2(8 * s, -4) * k, dark, 1.5 * k)
+		draw_line(c, c + Vector2(9 * s, 1) * k, dark, 1.5 * k)
+		draw_line(c, c + Vector2(8 * s, 6) * k, dark, 1.5 * k)
+	draw_circle(c + Vector2(0, 6) * k, 4.6 * k, dark)    # abdomen
+	draw_circle(c, 3.4 * k, dark)                        # thorax
+	draw_circle(c + Vector2(0, -6) * k, 3.2 * k, dark)   # head
+	draw_circle(c + Vector2(0, 6) * k, 2.4 * k, accent)  # caste marker
+	draw_line(c + Vector2(0, -6) * k, c + Vector2(-3.5, -10) * k, dark, 1.2 * k)
+	draw_line(c + Vector2(0, -6) * k, c + Vector2(3.5, -10) * k, dark, 1.2 * k)
 
-func _draw_erase(c: Vector2) -> void:
+func _draw_erase(c: Vector2, k: float) -> void:
 	var col := Color(0.93, 0.48, 0.45)
-	draw_line(c + Vector2(-8, -8), c + Vector2(8, 8), col, 3.5)
-	draw_line(c + Vector2(8, -8), c + Vector2(-8, 8), col, 3.5)
+	draw_line(c + Vector2(-8, -8) * k, c + Vector2(8, 8) * k, col, 3.5 * k)
+	draw_line(c + Vector2(8, -8) * k, c + Vector2(-8, 8) * k, col, 3.5 * k)
 
-func _draw_clear(c: Vector2) -> void:
+func _draw_clear(c: Vector2, k: float) -> void:
 	var metal := Color(0.72, 0.74, 0.76)
-	var body := PackedVector2Array([c + Vector2(-6, -3), c + Vector2(6, -3), c + Vector2(4, 10), c + Vector2(-4, 10)])
+	var body := PackedVector2Array([c + Vector2(-6, -3) * k, c + Vector2(6, -3) * k, c + Vector2(4, 10) * k, c + Vector2(-4, 10) * k])
 	draw_colored_polygon(body, metal)
-	draw_line(c + Vector2(-9, -4), c + Vector2(9, -4), metal.lightened(0.15), 3.0)  # lid
-	draw_line(c + Vector2(-3, -7), c + Vector2(3, -7), metal.lightened(0.15), 2.5)  # handle
+	draw_line(c + Vector2(-9, -4) * k, c + Vector2(9, -4) * k, metal.lightened(0.15), 3.0 * k)  # lid
+	draw_line(c + Vector2(-3, -7) * k, c + Vector2(3, -7) * k, metal.lightened(0.15), 2.5 * k)  # handle
 	for dx in [-2.0, 2.0]:
-		draw_line(c + Vector2(dx, 0), c + Vector2(dx, 7), Color(0.48, 0.50, 0.52), 1.3)
+		draw_line(c + Vector2(dx, 0) * k, c + Vector2(dx, 7) * k, Color(0.48, 0.50, 0.52), 1.3 * k)

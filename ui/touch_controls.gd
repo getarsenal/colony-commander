@@ -8,8 +8,8 @@ class_name TouchControls
 extends CanvasLayer
 
 const _BTN := preload("res://ui/caste_button.gd")
-const GAP := 10
-const MARGIN := 16
+const GAP := 14
+const MARGIN := 22
 
 var drawer: TrailDrawer
 
