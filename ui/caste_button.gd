@@ -19,7 +19,7 @@ var accent := Color.WHITE
 var selected := false
 
 func _ready() -> void:
-	custom_minimum_size = Vector2(W, HT)
+	custom_minimum_size = Vector2(W, HT) * Settings.ui_scale
 
 func _gui_input(event: InputEvent) -> void:
 	# Handle ONLY the mouse event. The project emulates mouse-from-touch, so a
@@ -30,21 +30,25 @@ func _gui_input(event: InputEvent) -> void:
 		accept_event()
 
 func _process(_delta: float) -> void:
+	# track the live UI scale so the whole panel resizes with the slider
+	custom_minimum_size = Vector2(W, HT) * Settings.ui_scale
 	queue_redraw()
 
 func _draw() -> void:
-	var c := Vector2(size.x * 0.5, RAD + 6.0)
+	var s := size.y / HT                # 1.0 at base, follows the size slider
+	var rad := RAD * s
+	var c := Vector2(size.x * 0.5, rad + 6.0 * s)
 	# selected glow
 	if selected:
-		draw_circle(c, RAD + 8.0, Color(accent, 0.30))
+		draw_circle(c, rad + 8.0 * s, Color(accent, 0.30))
 	# disc + soft inner shade
-	draw_circle(c, RAD, Color(0.16, 0.13, 0.09, 0.98))
-	draw_circle(c - Vector2(0, RAD * 0.28), RAD * 0.7, Color(0.22, 0.18, 0.12, 0.6))
+	draw_circle(c, rad, Color(0.16, 0.13, 0.09, 0.98))
+	draw_circle(c - Vector2(0, rad * 0.28), rad * 0.7, Color(0.22, 0.18, 0.12, 0.6))
 	# accent ring
 	var ring := accent if selected else accent.darkened(0.25)
-	draw_arc(c, RAD - 1.0, 0.0, TAU, 40, ring, 5.0 if selected else 3.5, true)
+	draw_arc(c, rad - 1.0 * s, 0.0, TAU, 40, ring, (5.0 if selected else 3.5) * s, true)
 
-	var k := 1.4
+	var k := 1.5 * s
 	match kind:
 		Kind.CASTE:
 			_draw_ant(c, k)
@@ -55,11 +59,11 @@ func _draw() -> void:
 
 	var f := ThemeDB.fallback_font
 	if f != null:
-		var sz := 19
+		var sz := int(round(20 * s))
 		var tw := f.get_string_size(label_text, HORIZONTAL_ALIGNMENT_LEFT, -1, sz).x
 		var col := accent.lerp(Color.WHITE, 0.45) if selected else Color(0.88, 0.86, 0.80)
-		draw_string(f, Vector2((size.x - tw) * 0.5 + 1, HT - 7), label_text, HORIZONTAL_ALIGNMENT_LEFT, -1, sz, Color(0, 0, 0, 0.6))
-		draw_string(f, Vector2((size.x - tw) * 0.5, HT - 8), label_text, HORIZONTAL_ALIGNMENT_LEFT, -1, sz, col)
+		draw_string(f, Vector2((size.x - tw) * 0.5 + 1, size.y - 9 * s), label_text, HORIZONTAL_ALIGNMENT_LEFT, -1, sz, Color(0, 0, 0, 0.6))
+		draw_string(f, Vector2((size.x - tw) * 0.5, size.y - 10 * s), label_text, HORIZONTAL_ALIGNMENT_LEFT, -1, sz, col)
 
 func _draw_ant(c: Vector2, k: float) -> void:
 	var dark := Color(0.10, 0.07, 0.05)

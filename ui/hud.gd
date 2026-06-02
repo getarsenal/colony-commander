@@ -21,7 +21,17 @@ var _overlay: Control
 var _overlay_title: Label
 var _overlay_sub: Label
 var _restart_btn: Button
+var _slider: HSlider
+var _size_label: Label
 var _fast := false
+var _applied_scale := -1.0
+
+# base (scale-1.0) sizes for the top controls
+const _CALL := Vector2(256, 80)
+const _SPEED := Vector2(82, 78)
+const _PAUSE := Vector2(162, 78)
+const _MUTE := Vector2(132, 78)
+const _RESTART := Vector2(330, 88)
 
 func _ready() -> void:
 	layer = 6  # above the world (0) and the caste panel (5)
@@ -34,20 +44,39 @@ func _ready() -> void:
 	_topbar.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_topbar)
 
-	_call_btn = _make_button("Call Wave", Color(0.55, 0.40, 0.12), Vector2(256, 80))
+	_call_btn = _make_button("Call Wave", Color(0.55, 0.40, 0.12), _CALL)
 	_call_btn.pressed.connect(_on_call)
 	add_child(_call_btn)
-	_speed_btn = _make_button("1x", Color(0.20, 0.22, 0.26), Vector2(82, 78))
+	_speed_btn = _make_button("1x", Color(0.20, 0.22, 0.26), _SPEED)
 	_speed_btn.pressed.connect(_on_speed)
 	add_child(_speed_btn)
-	_pause_btn = _make_button("Pause", Color(0.20, 0.22, 0.26), Vector2(162, 78))
+	_pause_btn = _make_button("Pause", Color(0.20, 0.22, 0.26), _PAUSE)
 	_pause_btn.pressed.connect(_on_pause)
 	add_child(_pause_btn)
-	_mute_btn = _make_button("Sound", Color(0.20, 0.22, 0.26), Vector2(132, 78))
+	_mute_btn = _make_button("Sound", Color(0.20, 0.22, 0.26), _MUTE)
 	_mute_btn.pressed.connect(_on_mute)
 	add_child(_mute_btn)
 
 	_build_overlay()
+	_build_size_slider()
+	_apply_ui_scale(Settings.ui_scale)
+
+func _build_size_slider() -> void:
+	_size_label = _make_label(18, HORIZONTAL_ALIGNMENT_CENTER)
+	_size_label.text = "Icon size"
+	_size_label.add_theme_color_override("font_color", Color(0.86, 0.85, 0.78, 0.8))
+	_size_label.size = Vector2(240, 22)
+	add_child(_size_label)
+
+	_slider = HSlider.new()
+	_slider.min_value = Settings.MIN
+	_slider.max_value = Settings.MAX
+	_slider.step = 0.05
+	_slider.value = Settings.ui_scale
+	_slider.custom_minimum_size = Vector2(240, 30)
+	_slider.size = Vector2(240, 30)
+	_slider.value_changed.connect(_on_size)
+	add_child(_slider)
 
 func _build_overlay() -> void:
 	_overlay = Control.new()
@@ -77,6 +106,14 @@ func _process(_delta: float) -> void:
 		return
 	var vp := get_viewport().get_visible_rect().size
 
+	# re-apply the size setting whenever the slider moves
+	if absf(Settings.ui_scale - _applied_scale) > 0.001:
+		_apply_ui_scale(Settings.ui_scale)
+
+	# icon-size slider, bottom-centre (the corners hold the caste/spawn panels)
+	_slider.position = Vector2((vp.x - _slider.size.x) * 0.5, vp.y - 40)
+	_size_label.position = Vector2((vp.x - _size_label.size.x) * 0.5, vp.y - 66)
+
 	# top-right controls
 	_pause_btn.position = Vector2(vp.x - _pause_btn.size.x - 16, 14)
 	_speed_btn.position = Vector2(_pause_btn.position.x - _speed_btn.size.x - 10, 14)
@@ -102,6 +139,24 @@ func _process(_delta: float) -> void:
 		_center(_restart_btn, vp, 56)
 	else:
 		_overlay.visible = false
+
+func _on_size(v: float) -> void:
+	Settings.set_ui_scale(v)
+
+func _apply_ui_scale(s: float) -> void:
+	_applied_scale = s
+	_set_btn(_call_btn, _CALL, s)
+	_set_btn(_speed_btn, _SPEED, s)
+	_set_btn(_pause_btn, _PAUSE, s)
+	_set_btn(_mute_btn, _MUTE, s)
+	_set_btn(_restart_btn, _RESTART, s)
+	_overlay_title.add_theme_font_size_override("font_size", int(round(64 * s)))
+	_overlay_sub.add_theme_font_size_override("font_size", int(round(26 * s)))
+
+func _set_btn(b: Button, base: Vector2, s: float) -> void:
+	b.custom_minimum_size = base * s
+	b.size = base * s
+	b.add_theme_font_size_override("font_size", int(round(28 * s)))
 
 func _center(c: Control, vp: Vector2, dy: float) -> void:
 	c.size = c.get_combined_minimum_size()

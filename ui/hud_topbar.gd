@@ -23,31 +23,34 @@ func _draw() -> void:
 		return
 	var w := size.x
 	var f := _font()
+	var us: float = Settings.ui_scale   # top text follows the icon-size slider too
 
 	# --- wave (top-left) ---
 	if director.is_victory():
-		_text(f, Vector2(24, 16), "LEVEL CLEARED", 34, Color(0.6, 0.95, 0.6))
+		_text(f, Vector2(24, 16), "LEVEL CLEARED", int(34 * us), Color(0.6, 0.95, 0.6))
 	elif director.is_defeat():
-		_text(f, Vector2(24, 16), "HILL OVERRUN", 34, Color(0.95, 0.45, 0.4))
+		_text(f, Vector2(24, 16), "HILL OVERRUN", int(34 * us), Color(0.95, 0.45, 0.4))
 	else:
 		var shown = min(director.wave_index + 1, director.total_waves())
-		_text(f, Vector2(24, 14), "WAVE %d / %d" % [shown, director.total_waves()], 34, Color(0.97, 0.93, 0.82))
+		_text(f, Vector2(24, 14), "WAVE %d / %d" % [shown, director.total_waves()], int(34 * us), Color(0.97, 0.93, 0.82))
 		var sub := ""
 		if director.is_prep():
 			sub = "Next: %d bugs in %ds" % [director.incoming_preview(), int(ceil(director.prep_timer))]
 		else:
 			sub = "%d bugs left" % director.enemies_remaining()
-		_text(f, Vector2(26, 56), sub, 20, Color(0.82, 0.78, 0.68))
+		_text(f, Vector2(26, 16 + 32 * us), sub, int(20 * us), Color(0.82, 0.78, 0.68))
 
 	# --- food (top-centre, with a pellet) ---
+	var fsz := int(32 * us)
 	var fs := "Food: %d" % colony.food
-	var fw := f.get_string_size(fs, HORIZONTAL_ALIGNMENT_LEFT, -1, 32).x
+	var fw := f.get_string_size(fs, HORIZONTAL_ALIGNMENT_LEFT, -1, fsz).x
 	var fcx := w * 0.5
-	draw_circle(Vector2(fcx - fw * 0.5 - 18, 32), 12, Color(0.92, 0.82, 0.34))
-	draw_circle(Vector2(fcx - fw * 0.5 - 21, 29), 3.5, Color(1, 1, 1, 0.6))
-	_text(f, Vector2(fcx - fw * 0.5, 14), fs, 32, Color(0.97, 0.90, 0.55))
+	draw_circle(Vector2(fcx - fw * 0.5 - 16 * us, 16 + 16 * us), 12 * us, Color(0.92, 0.82, 0.34))
+	draw_circle(Vector2(fcx - fw * 0.5 - 19 * us, 13 + 16 * us), 3.5 * us, Color(1, 1, 1, 0.6))
+	_text(f, Vector2(fcx - fw * 0.5, 14), fs, fsz, Color(0.97, 0.90, 0.55))
 
-	# --- score (top-right, under the control buttons) ---
+	# --- score (top-right, under the control buttons which scale by us) ---
+	var ssz := int(24 * us)
 	var ss := "Score: %d" % (director.enemies_killed * 10)
-	var sw := f.get_string_size(ss, HORIZONTAL_ALIGNMENT_LEFT, -1, 24).x
-	_text(f, Vector2(w - 22 - sw, 100), ss, 24, Color(0.90, 0.88, 0.78))
+	var sw := f.get_string_size(ss, HORIZONTAL_ALIGNMENT_LEFT, -1, ssz).x
+	_text(f, Vector2(w - 22 - sw, 20 + 78 * us), ss, ssz, Color(0.90, 0.88, 0.78))

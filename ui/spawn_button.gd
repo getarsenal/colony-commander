@@ -17,7 +17,7 @@ var cost := 0
 var affordable := true
 
 func _ready() -> void:
-	custom_minimum_size = Vector2(W, HT)
+	custom_minimum_size = Vector2(W, HT) * Settings.ui_scale
 
 func _gui_input(event: InputEvent) -> void:
 	# mouse only (touch arrives as mouse via emulate-mouse-from-touch)
@@ -26,34 +26,39 @@ func _gui_input(event: InputEvent) -> void:
 		accept_event()
 
 func _process(_delta: float) -> void:
+	custom_minimum_size = Vector2(W, HT) * Settings.ui_scale
 	queue_redraw()
 
 func _draw() -> void:
 	var f := ThemeDB.fallback_font
+	var s := size.y / HT                # follows the size slider
+	var rad := RAD * s
 	var dim := 1.0 if affordable else 0.45
-	var c := Vector2(size.x * 0.5, 64.0)
+	var c := Vector2(size.x * 0.5, 64.0 * s)
 
 	# count (top)
 	if f != null:
+		var csz := int(round(24 * s))
 		var cs := str(count)
-		var cw := f.get_string_size(cs, HORIZONTAL_ALIGNMENT_LEFT, -1, 24).x
-		draw_string(f, Vector2((size.x - cw) * 0.5 + 1, 9), cs, HORIZONTAL_ALIGNMENT_LEFT, -1, 24, Color(0, 0, 0, 0.6))
-		draw_string(f, Vector2((size.x - cw) * 0.5, 8), cs, HORIZONTAL_ALIGNMENT_LEFT, -1, 24, Color(0.95, 0.95, 0.9, dim))
+		var cw := f.get_string_size(cs, HORIZONTAL_ALIGNMENT_LEFT, -1, csz).x
+		draw_string(f, Vector2((size.x - cw) * 0.5 + 1, 9 * s), cs, HORIZONTAL_ALIGNMENT_LEFT, -1, csz, Color(0, 0, 0, 0.6))
+		draw_string(f, Vector2((size.x - cw) * 0.5, 8 * s), cs, HORIZONTAL_ALIGNMENT_LEFT, -1, csz, Color(0.95, 0.95, 0.9, dim))
 
 	# disc + ring
-	draw_circle(c, RAD, Color(0.15, 0.12, 0.08, 0.97 * (0.7 + 0.3 * dim)))
-	draw_circle(c - Vector2(0, RAD * 0.3), RAD * 0.68, Color(0.21, 0.17, 0.11, 0.6 * dim))
-	draw_arc(c, RAD - 1.0, 0.0, TAU, 36, Color(accent, dim), 4.0, true)
-	_draw_ant(c, 1.55, dim)
+	draw_circle(c, rad, Color(0.15, 0.12, 0.08, 0.97 * (0.7 + 0.3 * dim)))
+	draw_circle(c - Vector2(0, rad * 0.3), rad * 0.68, Color(0.21, 0.17, 0.11, 0.6 * dim))
+	draw_arc(c, rad - 1.0 * s, 0.0, TAU, 36, Color(accent, dim), 4.0 * s, true)
+	_draw_ant(c, 1.55 * s, dim)
 
 	# cost (bottom) with a little food pip
 	if f != null:
+		var psz := int(round(20 * s))
 		var cost_col := Color(0.97, 0.85, 0.4, dim)
 		var cstr := "+%d" % cost
-		var cw2 := f.get_string_size(cstr, HORIZONTAL_ALIGNMENT_LEFT, -1, 20).x
-		draw_circle(Vector2((size.x - cw2) * 0.5 - 8, HT - 14), 5.5, Color(0.92, 0.82, 0.34, dim))
-		draw_string(f, Vector2((size.x - cw2) * 0.5 + 1, HT - 7), cstr, HORIZONTAL_ALIGNMENT_LEFT, -1, 20, Color(0, 0, 0, 0.6))
-		draw_string(f, Vector2((size.x - cw2) * 0.5, HT - 8), cstr, HORIZONTAL_ALIGNMENT_LEFT, -1, 20, cost_col)
+		var cw2 := f.get_string_size(cstr, HORIZONTAL_ALIGNMENT_LEFT, -1, psz).x
+		draw_circle(Vector2((size.x - cw2) * 0.5 - 8 * s, size.y - 14 * s), 5.5 * s, Color(0.92, 0.82, 0.34, dim))
+		draw_string(f, Vector2((size.x - cw2) * 0.5 + 1, size.y - 7 * s), cstr, HORIZONTAL_ALIGNMENT_LEFT, -1, psz, Color(0, 0, 0, 0.6))
+		draw_string(f, Vector2((size.x - cw2) * 0.5, size.y - 8 * s), cstr, HORIZONTAL_ALIGNMENT_LEFT, -1, psz, cost_col)
 
 func _draw_ant(c: Vector2, k: float, dim: float) -> void:
 	var dark := Color(0.10, 0.07, 0.05, dim)
