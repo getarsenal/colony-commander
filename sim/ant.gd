@@ -29,16 +29,16 @@ const ARRIVE_EPS := 5.0       # px tolerance for "home"
 # --- Step 2: combat + harvest (handoff §5) ------------------------------------
 const HP_BY := {              # caste durability — soldiers tank, spitters are frail
 	AntTypes.Type.WORKER:  8.0,
-	AntTypes.Type.SOLDIER: 30.0,
+	AntTypes.Type.SOLDIER: 34.0,
 	AntTypes.Type.SPITTER: 14.0,
 	AntTypes.Type.BOMBER:  12.0,
 }
 const MELEE_RANGE := 16.0     # soldier bite reach
 const MELEE_DAMAGE := 8.0
-const MELEE_INTERVAL := 0.45
-const SPIT_RANGE := 150.0     # spitter engagement range
-const SPIT_INTERVAL := 0.7
-const HARVEST_RANGE := 28.0   # how near a trail tip a carcass must be to grab it
+const MELEE_INTERVAL := 0.42
+const SPIT_RANGE := 160.0     # spitter engagement range
+const SPIT_INTERVAL := 0.6
+const HARVEST_RANGE := 34.0   # how near a trail tip a carcass must be to grab it
 
 var state: int = State.IDLE
 var ant_type: int = AntTypes.Type.WORKER

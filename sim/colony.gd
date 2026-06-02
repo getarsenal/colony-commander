@@ -13,10 +13,10 @@ const POOL_SIZE := 420
 # you OWN a population of each caste (its max concurrent ants on the field), and
 # you grow that population by spending harvested food. Ants cycle out on trails
 # and return home, so a trail of caste X streams up to pop[X] ants of that caste.
-const START_POP := {AntTypes.Type.WORKER: 10, AntTypes.Type.SOLDIER: 8, AntTypes.Type.SPITTER: 5}
-const SPAWN_COST := {AntTypes.Type.WORKER: 5, AntTypes.Type.SOLDIER: 10, AntTypes.Type.SPITTER: 15}
+const START_POP := {AntTypes.Type.WORKER: 12, AntTypes.Type.SOLDIER: 8, AntTypes.Type.SPITTER: 4}
+const SPAWN_COST := {AntTypes.Type.WORKER: 5, AntTypes.Type.SOLDIER: 10, AntTypes.Type.SPITTER: 14}
 const SPAWN_BATCH := 3            # ants added to a caste's population per purchase
-const START_FOOD := 12
+const START_FOOD := 15
 
 var hill_pos := Vector2.ZERO
 var ant_layer: Node2D            # parent for all ant nodes (set by Main)
@@ -33,7 +33,7 @@ var active := {}                 # caste -> ants of that caste currently out
 var food := 0
 
 # --- defense + threat hookups -------------------------------------------------
-const HILL_HP_MAX := 100.0
+const HILL_HP_MAX := 120.0
 
 var director = null               # WaveDirector: enemy / carcass / projectile queries
 var fx = null                     # FxLayer: juice (puffs, popups, screen shake)

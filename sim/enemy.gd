@@ -10,15 +10,16 @@ enum Kind { BEETLE, LADYBUG, PILLBUG, FLY, BOSS }
 
 # per-kind: hp, walk speed, bite (vs ants), hill bite, body radius, food reward
 const STATS := {
-	Kind.BEETLE:  {"hp": 30.0, "spd": 34.0, "bite": 6.0,  "hill": 10.0, "body": 7.0,  "food": 5},
-	Kind.LADYBUG: {"hp": 22.0, "spd": 42.0, "bite": 5.0,  "hill": 8.0,  "body": 7.0,  "food": 4},
-	Kind.PILLBUG: {"hp": 64.0, "spd": 22.0, "bite": 9.0,  "hill": 14.0, "body": 9.0,  "food": 8},
-	Kind.FLY:     {"hp": 14.0, "spd": 66.0, "bite": 4.0,  "hill": 6.0,  "body": 5.5, "food": 3},
-	Kind.BOSS:    {"hp": 260.0,"spd": 18.0, "bite": 22.0, "hill": 26.0, "body": 16.0, "food": 40},
+	Kind.BEETLE:  {"hp": 30.0, "spd": 32.0, "bite": 5.0,  "hill": 9.0,  "body": 7.0,  "food": 5},
+	Kind.LADYBUG: {"hp": 20.0, "spd": 42.0, "bite": 4.0,  "hill": 7.0,  "body": 7.0,  "food": 4},
+	Kind.PILLBUG: {"hp": 60.0, "spd": 22.0, "bite": 8.0,  "hill": 12.0, "body": 9.0,  "food": 8},
+	Kind.FLY:     {"hp": 12.0, "spd": 60.0, "bite": 3.0,  "hill": 5.0,  "body": 5.5, "food": 3},
+	Kind.BOSS:    {"hp": 300.0,"spd": 18.0, "bite": 18.0, "hill": 22.0, "body": 16.0, "food": 40},
 }
 
 const TOUCH_RANGE := 15.0
 const ATTACK_INTERVAL := 0.7
+const PUSH_THROUGH := 1.8   # if not hurt for this long, shove past chaff toward the hill
 
 const TEX := {
 	Kind.BEETLE:  preload("res://assets/sprites/bug_beetle.png"),
@@ -48,6 +49,7 @@ var _target_ant = null
 var _attack_timer := 0.0
 var _hit_flash := 0.0
 var _wiggle := 0.0
+var _dmg_timer := 99.0   # seconds since last damaged (high = advance freely)
 
 func _ready() -> void:
 	visible = false
@@ -74,6 +76,7 @@ func spawn(pos: Vector2, p_kind: int) -> void:
 	_target_ant = null
 	_attack_timer = 0.0
 	_hit_flash = 0.0
+	_dmg_timer = 99.0
 	_wiggle = randf() * TAU
 	scale = Vector2.ONE
 	visible = true
@@ -89,15 +92,21 @@ func _process(delta: float) -> void:
 	if _hit_flash > 0.0:
 		_hit_flash = max(0.0, _hit_flash - delta)
 
+	_dmg_timer += delta
+
 	if not is_instance_valid(_target_ant) or not _target_ant.is_combatant_for_enemy():
 		_target_ant = colony.nearest_ant(position, TOUCH_RANGE + body) if colony != null else null
 
-	if is_instance_valid(_target_ant):
-		state = State.FIGHTING
+	var threat := is_instance_valid(_target_ant)
+	if threat:
 		_attack_timer -= delta
 		if _attack_timer <= 0.0:
 			_attack_timer = ATTACK_INTERVAL
 			_target_ant.take_damage(bite)
+	# Stop to brawl only while actually being hurt; otherwise shove past chaff
+	# (so non-damaging workers can't pin a bug forever, and thin lines leak).
+	if threat and _dmg_timer < PUSH_THROUGH:
+		state = State.FIGHTING
 	else:
 		state = State.ADVANCING
 		_advance(delta)
@@ -120,6 +129,7 @@ func take_damage(amount: float) -> void:
 		return
 	hp -= amount
 	_hit_flash = 0.12
+	_dmg_timer = 0.0   # being hurt -> stop and fight back
 	if hp <= 0.0:
 		_die()
 

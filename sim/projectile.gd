@@ -8,7 +8,7 @@ extends Node2D
 
 const SPEED := 320.0
 const HIT_RADIUS := 10.0
-const DAMAGE := 7.0
+const DAMAGE := 8.0
 const MAX_LIFE := 1.2
 
 var _alive := false

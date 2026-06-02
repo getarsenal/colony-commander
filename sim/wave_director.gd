@@ -13,12 +13,12 @@ enum State { PREP, SPAWNING, CLEARING, VICTORY, DEFEAT }
 const ENEMY_POOL := 64
 const CARCASS_POOL := 96
 const PROJECTILE_POOL := 96
-const MAX_ALIVE := 26                  # concurrent enemy cap (perf + readability)
+const MAX_ALIVE := 24                  # concurrent enemy cap (perf + readability at this zoom)
 
-# A gentle escalating level — counts only for this slice; types/biomes come later.
-const WAVE_COUNTS := [6, 9, 13, 17, 22, 28]
-const FIRST_PREP := 9.0                # breathing room before wave 1
-const PREP_TIME := 14.0                # seconds of prep between waves
+# An escalating level — counts only for this slice; types/biomes come later.
+const WAVE_COUNTS := [6, 9, 13, 18, 24, 30]
+const FIRST_PREP := 10.0               # breathing room before wave 1
+const PREP_TIME := 13.0                # seconds of prep between waves
 const SPAWN_SPACING := 0.55            # seconds between bugs within a wave
 
 var colony = null
@@ -35,7 +35,7 @@ var enemies_killed := 0
 
 var _to_spawn := 0
 var _spawn_timer := 0.0
-var _boss_pending := false
+var _bosses_pending := 0
 var _announced := false   # one-shot win/lose sting guard
 
 var _enemy_pool: Array = []
@@ -104,7 +104,8 @@ func _process(delta: float) -> void:
 func _start_wave() -> void:
 	_to_spawn = WAVE_COUNTS[wave_index]
 	_spawn_timer = 0.0
-	_boss_pending = wave_index >= 3   # a boss arrives from wave 4 on
+	# a boss from wave 4 on; the final wave brings two
+	_bosses_pending = (1 if wave_index >= 3 else 0) + (1 if wave_index == WAVE_COUNTS.size() - 1 else 0)
 	state = State.SPAWNING
 
 func _spawn_one() -> void:
@@ -113,8 +114,8 @@ func _spawn_one() -> void:
 
 ## Wave-scaled bug composition (boss saved for the tail of qualifying waves).
 func _pick_kind() -> int:
-	if _boss_pending and _to_spawn <= 1:
-		_boss_pending = false
+	if _bosses_pending > 0 and _to_spawn <= _bosses_pending:
+		_bosses_pending -= 1
 		return Enemy.Kind.BOSS
 	var w := wave_index
 	var roll := randf()
