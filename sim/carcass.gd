@@ -49,6 +49,31 @@ func claim_and_take() -> int:
 	_despawn()
 	return v
 
+## Reserve this body for a worker detouring toward it (stays on the field until
+## collected, so two workers don't chase the same one). Returns false if taken.
+func reserve() -> bool:
+	if not is_available():
+		return false
+	claimed = true
+	return true
+
+## Still here and reserved (the detouring worker checks this each frame).
+func is_reserved_alive() -> bool:
+	return _alive
+
+## The reserving worker arrived: bank the food and clear the body.
+func collect() -> int:
+	if not _alive:
+		return 0
+	var v := food_value
+	_despawn()
+	return v
+
+## The reserving worker died/left: free the body for someone else.
+func release_claim() -> void:
+	if _alive:
+		claimed = false
+
 func _despawn() -> void:
 	_alive = false
 	visible = false

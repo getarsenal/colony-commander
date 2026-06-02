@@ -14,16 +14,18 @@ extends Node2D
 enum State {
 	IDLE,         # pooled / inactive
 	OUTBOUND,     # walking from hill to trail end
-	WORKING,      # paused at the trail end doing its job (stub in step 1)
+	WORKING,      # paused at the trail end doing its job
 	RETURNING,    # walking back down the trail to the hill
 	FREE_RETURN,  # trail was erased mid-trip — walk straight home, gracefully
+	SEEK_FOOD,    # worker peeled off the trail to grab a nearby carcass
 }
 
 # --- Feel tuning (handoff §4 "the magic is here") -----------------------------
 const MIN_GAP := 9.0          # min pixels between an ant and the one ahead -> queueing/bunching
 const WIGGLE_AMP := 2.6       # lateral sway amplitude (px) -> "living column", not a conga line
 const WIGGLE_FREQ := 0.09     # how tight the sway is along the trail
-const WORK_TIME := 0.55       # seconds paused at the destination
+const WORK_TIME := 0.35       # seconds paused at the destination (shorter = less tip clog)
+const DETOUR_RANGE := 78.0    # how far a worker will peel off-trail to grab food
 const ARRIVE_EPS := 5.0       # px tolerance for "home"
 
 # --- Step 2: combat + harvest (handoff §5) ------------------------------------
@@ -52,6 +54,7 @@ var hp: float = 8.0
 var attack_timer: float = 0.0
 var carrying := false         # a worker hauling a carcass home
 var carry_value := 0
+var _target_carcass = null    # carcass a worker has reserved and is detouring to
 var _engaged := false         # holding position in melee this frame (pauses advance)
 var _hit_flash := 0.0         # white flash on taking a hit (juice)
 
@@ -83,6 +86,7 @@ func launch(p_trail, p_ahead) -> void:
 	attack_timer = 0.0
 	carrying = false
 	carry_value = 0
+	_target_carcass = null
 	_engaged = false
 	_hit_flash = 0.0
 	speed = AntTypes.speed_of(ant_type) * randf_range(0.88, 1.12)
@@ -116,11 +120,24 @@ func _process(delta: float) -> void:
 			_advance_return(delta)
 		State.FREE_RETURN:
 			_advance_free_return(delta)
+		State.SEEK_FOOD:
+			_advance_seek(delta)
 
 func _advance_outbound(delta: float) -> void:
 	if not is_instance_valid(trail) or not trail.is_usable():
 		_detach_and_free_return()
 		return
+	# Workers peel off the trail to grab a nearby carcass (playtester ask).
+	if ant_type == AntTypes.Type.WORKER and not carrying and colony != null:
+		var c = colony.nearest_available_carcass(position, DETOUR_RANGE)
+		if c != null and c.reserve():
+			_target_carcass = c
+			trail.ants.erase(self)
+			trail.outbound.erase(self)
+			trail = null
+			ahead = null
+			state = State.SEEK_FOOD
+			return
 	var step := speed * delta
 	var target := dist + step
 	# Congestion: never overtake the ant ahead — clamp behind it, which makes
@@ -164,6 +181,25 @@ func _advance_free_return(delta: float) -> void:
 	rotation = (home - position).angle()
 	if position.distance_to(home) <= ARRIVE_EPS:
 		_arrive_home()
+
+## Worker walking off-trail to a reserved carcass, then heading straight home.
+func _advance_seek(delta: float) -> void:
+	if not is_instance_valid(_target_carcass) or not _target_carcass.is_reserved_alive():
+		_target_carcass = null
+		_detach_and_free_return()  # food vanished — head home empty
+		return
+	var tp: Vector2 = _target_carcass.position
+	position = position.move_toward(tp, speed * delta)
+	rotation = (tp - position).angle()
+	if position.distance_to(tp) <= 6.0:
+		carry_value = _target_carcass.collect()
+		_target_carcass = null
+		carrying = carry_value > 0
+		if carrying:
+			Audio.sfx("harvest", -8.0)
+			if colony != null and colony.fx != null:
+				colony.fx.puff(position, Color(0.95, 0.85, 0.35), 8.0)
+		_detach_and_free_return()  # carry it straight home
 
 # --- combat + harvest (step 2) ------------------------------------------------
 
@@ -282,6 +318,9 @@ func unregister_from_trail() -> void:
 		trail.outbound.erase(self)
 
 func recycle() -> void:
+	if _target_carcass != null and is_instance_valid(_target_carcass):
+		_target_carcass.release_claim()  # free the body if we died mid-detour
+	_target_carcass = null
 	state = State.IDLE
 	trail = null
 	ahead = null
