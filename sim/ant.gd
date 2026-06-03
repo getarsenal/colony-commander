@@ -24,7 +24,7 @@ enum State {
 const MIN_GAP := 9.0          # min pixels between an ant and the one ahead -> queueing/bunching
 const WIGGLE_AMP := 2.6       # lateral sway amplitude (px) -> "living column", not a conga line
 const WIGGLE_FREQ := 0.09     # how tight the sway is along the trail
-const WORK_TIME := 0.35       # seconds paused at the destination (shorter = less tip clog)
+const WORK_TIME := 0.12       # brief pause at an open trail's tip (snappy turnaround)
 const DETOUR_RANGE := 78.0    # how far a worker will peel off-trail to grab food
 const ARRIVE_EPS := 5.0       # px tolerance for "home"
 
@@ -150,8 +150,14 @@ func _advance_outbound(delta: float) -> void:
 	var length: float = trail.length()
 	if dist >= length:
 		dist = length
-		state = State.WORKING
-		work_timer = WORK_TIME
+		if trail.is_loop:
+			_arrive_home()        # one-way loop: the end is back at the hill
+			return
+		elif ant_type == AntTypes.Type.WORKER:
+			state = State.WORKING  # brief pause to grab a tip carcass
+			work_timer = WORK_TIME
+		else:
+			_begin_return()        # soldiers/spitters about-face instantly (no clog)
 	_place_on_trail()
 
 func _begin_return() -> void:

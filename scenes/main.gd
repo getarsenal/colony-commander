@@ -129,7 +129,7 @@ func _build_hint() -> void:
 	_hint.position = Vector2(24, 130)
 	_hint.add_theme_font_size_override("font_size", 18)
 	_hint.add_theme_color_override("font_color", Color(0.86, 0.85, 0.78, 0.65))
-	_hint.text = "Drag from the hill to lead ants."
+	_hint.text = "Drag from the hill to lead ants. End back at the hill to make a loop."
 	layer.add_child(_hint)
 
 func _process(_delta: float) -> void:

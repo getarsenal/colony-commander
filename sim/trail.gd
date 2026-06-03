@@ -8,10 +8,12 @@ extends Node2D
 
 const MIN_POINT_DIST := 12.0   # don't record drag points closer than this (smooths input)
 const MIN_TRAIL_LEN := 40.0    # discard accidental taps
+const LOOP_DIST := 78.0        # if the drawn end returns near the hill, it's a one-way loop
 
 var curve := Curve2D.new()
 var ant_type: int = AntTypes.Type.WORKER
 var color := Color.WHITE
+var is_loop := false           # one-way: ants flow out and back to the hill, no turnaround
 
 # spawn metering
 var spawn_interval := 0.34     # seconds between ants on this trail
@@ -50,6 +52,11 @@ func finalize_drawing() -> bool:
 	_drawing = false
 	if curve.point_count < 2 or length() < MIN_TRAIL_LEN:
 		return false
+	# If the player brought the trail back near the hill, it's a one-way loop:
+	# ants flow out along it and arrive home at the end (no turnaround pile-up).
+	var origin := curve.get_point_position(0)
+	var endp := curve.get_point_position(curve.point_count - 1)
+	is_loop = endp.distance_to(origin) <= LOOP_DIST and length() > LOOP_DIST * 1.6
 	queue_redraw()
 	return true
 
