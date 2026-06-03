@@ -119,6 +119,7 @@ func _ready() -> void:
 	add_child(hud)
 
 	_build_hint()
+	add_child(TitleScreen.new())  # original emblem + tap-to-start (pauses until tapped)
 	queue_redraw()
 
 func _build_hint() -> void:

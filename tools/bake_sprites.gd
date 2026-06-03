@@ -22,6 +22,7 @@ func _initialize() -> void:
 	_bake_rock()
 	_bake_bigleaf()
 	_bake_vignette()
+	_bake_emblem()
 	_bake_beetle()
 	_bake_ladybug()
 	_bake_pillbug()
@@ -279,6 +280,68 @@ func _bake_vignette() -> void:
 			a = a * a * 0.55
 			img.set_pixel(x, y, Color(0.04, 0.03, 0.02, a))
 	_save(img, "vignette.png")
+
+## Original "Colony Commander" emblem: a round campaign badge with a friendly
+## helmeted worker-ant — our own art (not anyone's mascot).
+func _bake_emblem() -> void:
+	var sz := 256
+	var img := _img(sz, sz)
+	var c := Vector2(sz * 0.5, sz * 0.5)
+	# badge: gold rim, dark olive field
+	_disc(img, c, 122, Color(0.80, 0.63, 0.26))
+	_disc(img, c, 112, Color(0.20, 0.16, 0.09))
+	_disc(img, c, 105, Color(0.15, 0.18, 0.10))
+	_ring(img, c, 108, Color(0.86, 0.70, 0.32), 3.0)
+	# subtle inner sunburst
+	for i in 24:
+		var a := TAU * i / 24.0
+		_line(img, c + Vector2(cos(a), sin(a)) * 24, c + Vector2(cos(a), sin(a)) * 104, Color(0.22, 0.25, 0.13, 0.25), 5.0)
+
+	var head := c + Vector2(0, 22)
+	# antennae (up out of the helmet)
+	for s in [-1.0, 1.0]:
+		_line(img, head + Vector2(16 * s, -52), head + Vector2(34 * s, -86), Color(0.20, 0.13, 0.08), 4.0)
+		_ball(img, head.x + 36 * s, head.y - 88, 6, Color(0.42, 0.27, 0.15))
+	# head
+	_ball(img, head.x, head.y, 50, Color(0.45, 0.29, 0.16))
+	# eyes
+	for s in [-1.0, 1.0]:
+		_ball(img, head.x + 18 * s, head.y + 4, 13, Color(0.96, 0.96, 0.92))
+		_ball(img, head.x + 20 * s, head.y + 6, 6.5, Color(0.10, 0.10, 0.12))
+	# mandibles
+	for s in [-1.0, 1.0]:
+		_line(img, head + Vector2(20 * s, 36), head + Vector2(40 * s, 50), Color(0.20, 0.13, 0.08), 6.0)
+	# helmet dome over the top of the head
+	_ball(img, head.x, head.y - 16, 52, Color(0.33, 0.37, 0.18), 0.45, 0.45, 0.62)
+	_line(img, head + Vector2(-50, -10), head + Vector2(50, -10), Color(0.18, 0.21, 0.10), 5.0)  # brim
+	# a small original star on the helmet
+	_star(img, head + Vector2(0, -34), 13, Color(0.92, 0.78, 0.34))
+	_save(img, "emblem.png")
+
+func _disc(img: Image, c: Vector2, r: float, col: Color) -> void:
+	for y in range(int(c.y - r - 1), int(c.y + r + 2)):
+		for x in range(int(c.x - r - 1), int(c.x + r + 2)):
+			var d := Vector2(x + 0.5, y + 0.5).distance_to(c)
+			if d <= r:
+				var a := clampf((r - d), 0.0, 1.0)
+				_blend(img, x, y, Color(col.r, col.g, col.b, a))
+
+func _ring(img: Image, c: Vector2, r: float, col: Color, width: float) -> void:
+	var steps := int(TAU * r)
+	for i in steps + 1:
+		var a := TAU * i / steps
+		_ball(img, c.x + cos(a) * r, c.y + sin(a) * r, width, col, 0.9, 0.0)
+
+func _star(img: Image, c: Vector2, r: float, col: Color) -> void:
+	var pts := PackedVector2Array()
+	for i in 10:
+		var rr: float = r if i % 2 == 0 else r * 0.45
+		var a := -PI / 2 + TAU * i / 10.0
+		pts.append(c + Vector2(cos(a), sin(a)) * rr)
+	# scanline-ish fill via many thin triangles from centre
+	for i in pts.size():
+		_line(img, c, pts[i], col, 2.0)
+		_line(img, c, c.lerp(pts[i], 0.5), col, r * 0.6)
 
 func _bake_hill() -> void:
 	var sz := 240
